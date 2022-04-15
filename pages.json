@@ -26,10 +26,19 @@
         "navigationBarTitleText": "我的 | Forum",
         "enablePullDownRefresh": true
       }
+    },
+    {
+      "path": "pages/post-detail/index",
+      "style": {
+        "navigationBarTitleText": "详情 | Forum",
+        "enablePullDownRefresh": true
+      }
     }
   ],
   "globalStyle": {
-    "navigationStyle": "custom",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "论坛",
     "app-plus": {
       "background": "#efeff4"
     }

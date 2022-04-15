@@ -1,7 +1,7 @@
 <script>
 export default {
   globalData: {
-    tabbarValue: 0,
+    currentPostItem: {},
   },
   onLaunch: function () {},
   onShow: function () {},

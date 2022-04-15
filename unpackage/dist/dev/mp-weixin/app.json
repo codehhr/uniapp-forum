@@ -3,11 +3,14 @@
     "pages/index/index",
     "pages/categories/index",
     "pages/post/index",
-    "pages/mine/index"
+    "pages/mine/index",
+    "pages/post-detail/index"
   ],
   "subPackages": [],
   "window": {
-    "navigationStyle": "custom"
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "论坛"
   },
   "tabBar": {
     "selectedColor": "#1890ff",
