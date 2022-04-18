@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const operateTime = require("./operateTime");
+const md5 = require("../utils/md5");
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -8,15 +9,16 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,
+    default: "",
   },
   password: {
     type: String,
     required: true,
+    set: (value) => md5(value),
   },
   avatar: {
     type: String,
-    default: null,
+    default: "",
   },
   operateTime,
 });

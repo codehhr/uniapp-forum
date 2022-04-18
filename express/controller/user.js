@@ -1,21 +1,26 @@
 const { User } = require("../model");
 
-exports.login = async (req, res, next) => {
+// 用户注册
+exports.register = async (req, res, next) => {
   try {
-    console.log(req.body);
-    res.end();
+    let user = new User(req.body);
+    await user.save();
+    res.status(200).json({
+      code: 0,
+      msg: "注册成功",
+    });
   } catch (err) {
     next(err);
   }
 };
 
-exports.register = async (req, res, next) => {
+// 用户登录
+exports.login = async (req, res, next) => {
   try {
-    let user = new User(req.body);
-    console.log(user);
-    await user.save();
-    // user = JSON.parse(user);
-    res.status(200).json({ user });
+    res.status(200).json({
+      code: 0,
+      msg: "登录成功",
+    });
   } catch (err) {
     next(err);
   }
