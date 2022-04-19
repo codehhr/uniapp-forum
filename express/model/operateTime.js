@@ -1,9 +1,9 @@
 module.exports = {
-  createdAt: {
+  createdTime: {
     type: Date,
     default: Date.now,
   },
-  updateAt: {
+  updateTime: {
     type: Date,
     default: Date.now,
   },

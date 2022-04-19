@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
+    required: true,
     default: "",
   },
   password: {
@@ -20,7 +21,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  operateTime,
+  ...operateTime,
 });
 
 module.exports = userSchema;

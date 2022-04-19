@@ -9,22 +9,6 @@ const app = new Vue({
   uView,
   ...App,
 });
-
-// Vue.prototype.$getPostList = ({ pageSize, pageNum }) => {
-//   return new Promise((resove, reject) => {
-//     uni.request({
-//       url: `https://showme2.myhope365.com/api/bbs/bbsPosts/open/list`,
-//       success: (res) => {
-//         if (res.statusCode == 200 && res.data.resources.length >= 0) {
-//           resove(res);
-//         } else {
-//           reject(res);
-//         }
-//       },
-//     });
-//   });
-// };
-
 app.$mount();
 // #endif
 

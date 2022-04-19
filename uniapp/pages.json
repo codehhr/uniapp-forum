@@ -33,6 +33,18 @@
         "navigationBarTitleText": "详情 | Forum",
         "enablePullDownRefresh": true
       }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录 | Forum"
+      }
+    },
+    {
+      "path": "pages/register/index",
+      "style": {
+        "navigationBarTitleText": "注册 | Forum"
+      }
     }
   ],
   "globalStyle": {

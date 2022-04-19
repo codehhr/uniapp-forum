@@ -1,3 +1,4 @@
-export function formatTime(time) {
-  return time;
-}
+// 时间格式化
+export const formatTime = (time) => {
+  return new Date(time).toLocaleString();
+};

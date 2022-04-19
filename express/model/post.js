@@ -1,22 +1,34 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+const operateTime = require("./operateTime");
 
+// 文章和作者关联起来, 用 mongoose 的 populate
 const postSchema = new mongoose.Schema({
-  username: {
+  title: {
     type: String,
     required: true,
   },
-  avatar: {
+  subtitle: {
     type: String,
+  },
+  describe: {
+    type: String,
+    required: true,
+  },
+  categoryList: {
+    type: [String],
     default: null,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  album: {
+    type: [String],
+    default: null,
   },
-  updateAt: {
-    type: Date,
-    default: Date.now,
+  author: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
+  ...operateTime,
 });
 
 module.exports = postSchema;

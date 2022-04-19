@@ -128,20 +128,14 @@
       text="暂无评论"
     >
     </u-empty>
-    <reply-comment v-else :comments="comments"></reply-comment>
     <!-- post comments end -->
   </view>
 </template>
 
 <script>
-import replyComment from "../../components/comments/index";
-
 const app = getApp();
 
 export default {
-  components: {
-    replyComment,
-  },
   data() {
     return {
       postItem: {},
