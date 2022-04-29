@@ -1,11 +1,13 @@
-const { User } = require("../model");
+const { User } = require("../model/index");
+const { sign } = require("../utils/jwt");
+const { jwtSecret } = require("../config/config.default");
 
 // 用户注册
 exports.register = async (req, res, next) => {
   try {
-    let user = new User(req.body);
+    let user = new User(req.body.user);
     await user.save();
-    res.status(200).json({
+    res.json({
       code: 0,
       msg: "注册成功",
     });
@@ -14,31 +16,32 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// 用户登录
+// Authentication 用户登录
 exports.login = async (req, res, next) => {
   try {
-    res.status(200).json({
+    // 生成 token
+    const token = await sign({ userId: req.user._id }, jwtSecret, {
+      expiresIn: 60 * 60 * 24,
+    });
+
+    res.json({
       code: 0,
       msg: "登录成功",
+      token,
+      ...req.user.toJSON(),
     });
   } catch (err) {
     next(err);
   }
 };
 
-exports.getUserInfo = async (req, res, next) => {
+// 获取当前登录用户
+exports.getUser = (req, res, next) => {
   try {
-    console.log(req.body);
-    res.end("");
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.updateUserInfo = async (req, res, next) => {
-  try {
-    console.log(req.body);
-    res.send("update /userinfo");
+    res.json({
+      code: 0,
+      user: req.user,
+    });
   } catch (err) {
     next(err);
   }

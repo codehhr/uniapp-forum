@@ -6,7 +6,7 @@ const errHandler = require("./middleware/errHandler");
 require("./model");
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 9000;
 
 app.use(cors());
 app.use(morgan("dev"));

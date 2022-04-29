@@ -2,13 +2,19 @@
 
 const express = require("express");
 const router = express.Router();
+const postController = require("../controller/post");
+const postValidator = require("../middleware/validate/post");
+const auth = require("../middleware/auth");
 
-router.get("/", (req, res, next) => {
-  try {
-    res.send("get /post");
-  } catch (err) {
-    next(err);
-  }
-});
+// 获取帖子列表
+router.get("/list", postController.getPost);
+
+// 发帖
+router.post(
+  "/create",
+  auth,
+  postValidator.createPost,
+  postController.createPost
+);
 
 module.exports = router;

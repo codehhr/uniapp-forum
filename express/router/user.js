@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controller/user");
 const userValidator = require("../middleware/validate/user");
+const auth = require("../middleware/auth");
 
 // 用户注册
 router.post("/register", userValidator.register, userController.register);
@@ -11,16 +12,13 @@ router.post("/register", userValidator.register, userController.register);
 // 用户登录
 router.post("/login", userValidator.login, userController.login);
 
-// 获取当前用户信息
-router.get("/userinfo", userController.getUserInfo);
-
-// 更新当前用户信息
-router.put("/userinfo", userController.updateUserInfo);
+// 获取当前登录用户
+router.get("/self", auth, userController.getUser);
 
 module.exports = router;
 
 // const { body, validationResult } = require("express-validator");
-// const { User } = require("../model");
+// const { User } = require("../model/index");
 // // Registration 用户注册
 // router.post(
 //   "/register",

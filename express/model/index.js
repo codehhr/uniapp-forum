@@ -6,12 +6,16 @@ mongoose.connect(
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    config: { autoIndex: false },
   },
+
   (err) => {
     if (err) {
       console.log("Mongod Err !", err);
     } else {
-      console.log("Mongod Connected !");
+      console.log("****************************************\n");
+      console.log("\tMongod Connected !\n");
+      console.log("****************************************");
     }
   }
 );

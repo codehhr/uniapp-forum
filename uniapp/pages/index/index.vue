@@ -24,11 +24,12 @@
         searchIconColor="#667c99"
         color="#667c99"
         bgColor="#ffffff"
-        @clear="isSearchFocus = false"
+        @clear="handleSearchBlur"
         @custom="handleSearch"
         @search="handleSearch"
         @clickIcon="handleSearch"
         @focus="handleSearchFocus"
+        @blur="handleSearchBlur"
       ></u-search>
     </view>
     <!-- search end -->
@@ -38,7 +39,7 @@
       <!-- 遮罩层 start -->
       <view
         v-if="isSearchFocus"
-        class="post-list-cover"
+        class="post-list-mask"
         @click="isSearchFocus = false"
       ></view>
       <!-- 遮罩层 end -->
@@ -48,37 +49,44 @@
         <!-- avatar -->
         <u-avatar
           class="post-item-avatar"
-          icon="account"
+          :src="item.author.avatar"
           mpde="widthFix"
           randomBgColor
           fontSize="40rpx"
         ></u-avatar>
         <!-- post content start -->
         <view class="post-content">
-          <!-- title -->
+          <!-- username -->
           <u--text
-            class="title"
-            v-if="item.title"
+            class="post-username"
             :lines="1"
-            :text="item.title"
-            type="primary"
-            size="28rpx"
-            margin="4rpx 0"
+            :text="item.author.username"
+            bold
+            size="32rpx"
             @click="handleClickPostItem(item)"
           ></u--text>
-          <!-- subtitle -->
+          <!-- updateTime -->
           <u--text
-            class="subtitle"
-            v-if="item.subtitle"
+            class="post-updateTime"
             :lines="1"
-            :text="item.subtitle"
+            mode="date"
+            :text="item.updateTime"
             type="info"
-            size="24rpx"
+            size="20rpx"
+            @click="handleClickPostItem(item)"
+          ></u--text>
+          <!-- title -->
+          <u--text
+            class="post-title"
+            :lines="1"
+            :text="item.title"
+            size="32rpx"
+            margin="20rpx 0 0"
             @click="handleClickPostItem(item)"
           ></u--text>
           <!-- describe start -->
           <view
-            class="describe"
+            class="post-describe"
             v-if="
               item.describe && /<(\w+)[^>]*>(.*?<\/\1>)?/.test(item.describe)
             "
@@ -86,14 +94,14 @@
           ></view>
           <u--text
             v-else-if="item.describe && item.describe.length"
-            class="describe"
+            class="post-describe"
             :lines="3"
             :text="item.describe"
             size="24rpx"
             @click="handleClickPostItem(item)"
           ></u--text>
           <!-- 空 describe ，占位 -->
-          <view v-else class="describe"></view>
+          <view v-else class="post-describe"></view>
           <!-- describe end -->
 
           <!-- albums -->
@@ -139,10 +147,14 @@
       <!-- post item end -->
     </view>
     <!-- post list end -->
+
+    <!-- notify -->
+    <u-notify ref="indexNotify"></u-notify>
   </view>
 </template>
 
 <script>
+import { getAllPostListApi } from "../../api/post";
 const app = getApp();
 
 export default {
@@ -156,180 +168,59 @@ export default {
       // 搜索的关键词
       keywords: "",
       // 帖子列表
-      postList: [
-        {
-          post_id: 1,
-          user_id: 1,
-          category: "linux",
-          title: "主标题1",
-          subtitle: "副标题1",
-          user_name: "A",
-          avatar: "https://cdn.uviewui.com/uview/album/1.jpg",
-          albums: [
-            "https://cdn.uviewui.com/uview/album/1.jpg",
-            "https://cdn.uviewui.com/uview/album/2.jpg",
-            "https://cdn.uviewui.com/uview/album/3.jpg",
-            "https://cdn.uviewui.com/uview/album/4.jpg",
-            "https://cdn.uviewui.com/uview/album/5.jpg",
-            "https://cdn.uviewui.com/uview/album/6.jpg",
-            "https://cdn.uviewui.com/uview/album/7.jpg",
-            "https://cdn.uviewui.com/uview/album/8.jpg",
-            "https://cdn.uviewui.com/uview/album/9.jpg",
-            "https://cdn.uviewui.com/uview/album/10.jpg",
-          ],
-          describe: `里是大家参与、公开讨论的场所。
-一般不建议留邮箱/QQ等私下交流。因为论坛可以记录你的问题和解决方案，在未来也许会帮到其他人（或者六个月之后的你自己）。
-1.2 正确的发帖姿势
-发帖求助时，提问者请把自己的问题交代清楚，节省大家的时间，不要没有前因后果、没有上下文，让别人看了你的问题还得继续追问。很差的问题如“我的R出错了，请问我该怎么办？”；你得告诉别人在怎样的情况下出错了以及出了什么错。
-
-一个好的问题应当包括以下两个部分：`,
-          like: 1024,
-          comments: 12,
-        },
-        {
-          post_id: 2,
-          user_id: 2,
-          albums: ["https://cdn.uviewui.com/uview/album/1.jpg"],
-          user_name: "B",
-          title: "主标题2",
-          extra: "额外信息2",
-          avatar:
-            "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/emoji/s.png",
-          cover: "../../static/tree.png",
-          like: 2345,
-          comments: 32,
-          describe: "",
-        },
-        {
-          post_id: 3,
-          user_id: 3,
-          title: "主标题3",
-          user_name: "C",
-          extra: "额外信息3",
-          albums: [],
-          avatar:
-            "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/emoji/s.png",
-          cover: "../../static/tree.png",
-          // describe: `<iframe src="//player.bilibili.com/player.html?aid=979700978&bvid=BV1B44y1K74e&cid=546672682&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>`,
-          like: 567,
-          comments: 90,
-        },
-        {
-          post_id: 4,
-          user_id: 4,
-          user_name: "D",
-          title: "主标题4",
-          extra: "额外信息4",
-          avatar:
-            "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/emoji/s.png",
-          cover: "../../static/tree.png",
-          describe: `你的作业是你自己的事情，我们相信大多数老师都会要求作业独立完成；若有例外，请按照老师的要求寻求适当的帮助。
-有问题尽管问，但 不要重复发帖，这样只会让人更加不愿意回复，它也给版主带来了额外的删帖劳动。提问之前请先花两分钟浏览或搜索一下别人相关帖子，看看有没有类似的问题。
-疑问再大也不要使用 多于三个的问号，感情再强烈也不要使用三个以上的叹号。
-新问题请另开新帖， 不建议搭车问问题
-帖子标题严禁 只使用“求助”“问个问题”“请教”这样的短语，请把您的问题 用简短的语言阐述清楚，不写清楚标题的帖子很可能会被删除。
-R语言相关问题 没有样本数据和代码，没有可重复例子。本条具体规范详见 1.2 部分。
-以下社区礼仪希望大家遵守：
-
-不要特意强调自己是新手，也不要加急；我们只关心问题能否问好，是否是新手、是否着急，与别人是否会回答问题无关。
-建议 不要点名让谁回答你的问题，因为这里是大家参与、公开讨论的场所。
-一般不建议留邮箱/QQ等私下交流。因为论坛可以记录你的问题和解决方案，在未来也许会帮到其他人（或者六个月之后的你自己）。
-1.2 正确的发帖姿势
-发帖求助时，提问者请把自己的问题交代清楚，节省大家的时间，不要没有前因后果、没有上下文，让别人看了你的问题还得继续追问。很差的问题如“我的R出错了，请问我该怎么办？”；你得告诉别人在怎样的情况下出错了以及出了什么错。
-
-一个好的问题应当包括以下两个部分：`,
-          like: 56237,
-          comments: 902,
-        },
-        {
-          post_id: 5,
-          user_id: 5,
-          title: "主标题5",
-          extra: "额外信息5",
-          avatar:
-            "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/emoji/s.png",
-          //   cover:
-          //     "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/cover/tree.png",
-          describe: `的作业是你自己的事情，我们相信大多数老师都会要求作业独立完成；若有例外，请按照老师的要求寻求适当的帮助。
-有问题尽管问，但 不要重复发帖，这样只会让人更加不愿意回复，它也给版主带来了额外的删帖劳动。提问之前请先花两分钟浏览或搜索一下别人相关帖子，看看有没有类似的问题。
-疑问再大也不要使用 多于三个的问号，感情再强烈也不要使用三个以上的叹号。
-新问题请另开新帖， 不建议搭车问问题
-帖子标题严禁 只使用“求助”“问个问题”“请教”这样的短语，请把您的问题 用简短的语言阐述清楚，不写清楚标题的帖子很可能会被删除。
-R语言相关问题 没有样本数据和代码，没有可重复例子。本条具体规范详见 1.2 部分。
-以下社区礼仪希望大家遵守：
-
-不要特意强调自己是新手，也不要加急；我们只关心问题能否问好，是否是新手、是否着急，与别人是否会回答问题无关。
-建议 不要点名让谁回答你的问题，因为这里是大家参与、公开讨论的场所。
-一般不建议留邮箱/QQ等私下交流。因为论坛可以记录你的问题和解决方案，在未来也许会帮到其他人（或者六个月之后的你自己）。
-1.2 正确的发帖姿势
-发帖求助时，提问者请把自己的问题交代清楚，节省大家的时间，不要没有前因后果、没有上下文，让别人看了你的问题还得继续追问。很差的问题如“我的R出错了，请问我该怎么办？”；你得告诉别人在怎样的情况下出错了以及出了什么错。
-
-一个好的问题应当包括以下两个部分：`,
-          like: 10424,
-          comments: 412,
-        },
-        {
-          post_id: 6,
-          user_id: 6,
-          title: "主标题6",
-          extra: "额外信息6",
-          avatar:
-            "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/emoji/s.png",
-          cover: "../../static/tree.png",
-          like: 26345,
-          comments: 362,
-        },
-        {
-          user_id: 7,
-          post_id: 7,
-          title: "主标题7",
-          extra: "额外信息7",
-          avatar:
-            "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/emoji/s.png",
-          cover: "../../static/tree.png",
-          describe: `不要在这里问你的作业答案，你的作业是你自己的事情，我们相信大多数老师都会要求作业独立完成；若有例外，请按照老师的要求寻求适当的帮助。
-有问题尽管问，但 不要重复发帖，这样只会让人更加不愿意回复，它也给版主带来了额外的删帖劳动。提问之前请先花两分钟浏览或搜索一下别人相关帖子，看看有没有类似的问题。
-疑问再大也不要使用 多于三个的问号，感情再强烈也不要使用三个以上的叹号。
-新问题请另开新帖， 不建议搭车问问题
-帖子标题严禁 只使用“求助”“问个问题”“请教”这样的短语，请把您的问题 用简短的语言阐述清楚，不写清楚标题的帖子很可能会被删除。
-R语言相关只关心问题能否问好，是否是新手、是否着急，与别人是否会回答问题无关。
-建议 不要点名让谁回答你的问题，因为这里是大家参与、公开讨论的场所。
-一般不建议留邮箱/QQ等私下交流。因为论坛可以记录你的问题和解决方案，在未来也许会帮到其他人（或者六个月之后的你自己）。
-1.2 正确的发帖姿势
-发帖求助时，提问者请把自己的问题交代清楚，节省大家的时间，不要没有前因后果、没有上下文，让别人看了你的问题还得继续追问。很差的问题如“我的R出错了，请问我该怎么办？”；你得告诉别人在怎样的情况下出错了以及出了什么错。
-
-一个好的问题应当包括以下两个部分：`,
-          like: 75677,
-          comments: 7790,
-        },
-        {
-          user_id: 8,
-          post_id: 8,
-          title: "主标题8",
-          extra: "额外信息8",
-          avatar:
-            "https://codehhr.coding.net/p/codehhr/d/images/git/raw/master/emoji/s.png",
-          cover: "../../static/tree.png",
-          describe: `不要在这里问你的作业答案，你的作业是你自己的事情，我们相信大多数老师都会要求作业独立完成；若有例外，请按照老师的要求寻求适当的帮助。
-有问清楚，节省大家的时间，不要没有前因后果、没有上下文，让别人看了你的问题还得继续追问。很差的问题如“我的R出错了，请问我该怎么办？”；你得告诉别人在怎样的情况下出错了以及出了什么错。`,
-          like: 568237,
-          comments: 8902,
-        },
-      ],
+      postList: [],
     };
   },
+
   onReachBottom() {},
 
   onPullDownRefresh() {
-    console.log("refresh");
-    setTimeout(() => {
-      uni.stopPullDownRefresh();
-    }, 1000);
+    this.getAllPostList(0);
   },
+
   onPageScroll(e) {
     this.scrollTop = e.scrollTop;
   },
+
+  onReady() {
+    this.getAllPostList();
+  },
+
   methods: {
+    // 获取帖子列表
+    async getAllPostList(onPullDownRefresh) {
+      const res = await getAllPostListApi().catch((e) => {});
+      console.log(res);
+      setTimeout(() => {
+        uni.stopPullDownRefresh();
+      }, 500);
+      if (res && res.code === 0) {
+        // 只有下拉刷新时弹出提示
+        if (onPullDownRefresh === 0) {
+          this.$refs.indexNotify.show({
+            type: "primary",
+            color: "#ffffff",
+            bgColor: "#3c9cff",
+            message: res.msg,
+            duration: 1000,
+            fontSize: 16,
+            safeAreaInsetTop: true,
+          });
+        }
+        this.postList = res.postList;
+      } else {
+        this.$refs.indexNotify.show({
+          type: "error",
+          color: "#ffffff",
+          bgColor: "#f56c6c",
+          message: res.msg,
+          duration: 1500,
+          fontSize: 16,
+          safeAreaInsetTop: true,
+        });
+      }
+    },
+
     // 点击帖子
     handleClickPostItem(item) {
       app.globalData.currentPostItem = item;
@@ -365,6 +256,10 @@ R语言相关只关心问题能否问好，是否是新手、是否着急，与�
     handleSearchFocus() {
       this.isSearchFocus = true;
     },
+    // 搜索框失焦时
+    handleSearchBlur() {
+      this.isSearchFocus = false;
+    },
   },
 };
 </script>
@@ -380,12 +275,12 @@ R语言相关只关心问题能否问好，是否是新手、是否着急，与�
   .post-list {
     position: relative;
     padding-bottom: 80rpx;
-    .post-list-cover {
+    .post-list-mask {
       position: absolute;
       width: 100%;
       height: 100%;
       z-index: 10;
-      background-color: rgba(138, 138, 138, 0.8);
+      background-color: rgba(241, 241, 241, 0.8);
     }
     .post-item {
       margin: 20rpx 0;
@@ -396,8 +291,8 @@ R语言相关只关心问题能否问好，是否是新手、是否着急，与�
       .post-content {
         padding: 0 20rpx;
         width: 100%;
-        .describe {
-          padding: 10rpx 0 20rpx;
+        .post-describe {
+          padding: 10rpx 0;
         }
       }
       .post-actions {

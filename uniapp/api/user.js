@@ -5,7 +5,7 @@ export const registerApi = (data) => {
   return httpRequest({
     url: "/user/register",
     method: "POST",
-    data,
+    data: { user: data },
   });
 };
 
@@ -14,6 +14,14 @@ export const loginApi = (data) => {
   return httpRequest({
     url: "/user/login",
     method: "POST",
-    data,
+    data: { user: data },
+  });
+};
+
+// 获取当前登录用户
+export const getCurrentUserApi = () => {
+  return httpRequest({
+    url: "/user/self",
+    method: "GET",
   });
 };

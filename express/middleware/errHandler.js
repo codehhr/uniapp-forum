@@ -1,9 +1,10 @@
-// 错误处理中间件
+// 路由错误处理中间件
 
 const util = require("util");
 module.exports = () => {
   return (err, req, res, next) => {
-    res.status(500).json({
+    res.json({
+      code: -1,
       msg: util.format(err),
     });
   };

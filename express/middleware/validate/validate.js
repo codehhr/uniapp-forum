@@ -10,7 +10,7 @@ module.exports = (validations) => {
     if (errors.isEmpty()) {
       return next();
     } else {
-      res.status(400).json({ msg: errors.array() });
+      res.send({ msg: errors.array() });
     }
   };
 };

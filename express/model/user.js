@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const operateTime = require("./operateTime");
+const common = require("./common");
 const md5 = require("../utils/md5");
 
 const userSchema = new mongoose.Schema({
@@ -15,13 +15,14 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    select: false,
     set: (value) => md5(value),
   },
   avatar: {
     type: String,
-    default: "",
+    default: "https://cdn.uviewui.com/uview/album/1.jpg",
   },
-  ...operateTime,
+  ...common,
 });
 
 module.exports = userSchema;
