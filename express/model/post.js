@@ -16,16 +16,17 @@ const postSchema = new Schema({
     type: String,
     required: "",
   },
-  categoryList: {
-    type: [String],
-    default: null,
+  category: {
+    type: Number,
+    default: 0,
   },
   albums: {
     type: [String],
     default: [],
   },
   like: {
-    type: String,
+    type: Number,
+    default: 0,
   },
   author: {
     type: Schema.Types.ObjectId,

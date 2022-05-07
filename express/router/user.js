@@ -12,11 +12,12 @@ router.post("/register", userValidator.register, userController.register);
 // 用户登录
 router.post("/login", userValidator.login, userController.login);
 
-// 获取当前登录用户
-router.get("/self", auth, userController.getUser);
+// 获取当前登录用户信息
+router.get("/self", auth, userController.getUserInfo);
 
 module.exports = router;
 
+// 未封装的完整示例
 // const { body, validationResult } = require("express-validator");
 // const { User } = require("../model/index");
 // // Registration 用户注册

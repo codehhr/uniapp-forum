@@ -66,7 +66,6 @@
           :lines="3"
           :text="postItem.describe"
           size="24rpx"
-          @click="handleClickPostItem(postItem)"
         ></u--text>
         <!-- 空 describe ，占位 -->
         <view v-else class="describe"></view>

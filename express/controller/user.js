@@ -28,19 +28,19 @@ exports.login = async (req, res, next) => {
       code: 0,
       msg: "登录成功",
       token,
-      ...req.user.toJSON(),
     });
   } catch (err) {
     next(err);
   }
 };
 
-// 获取当前登录用户
-exports.getUser = (req, res, next) => {
+// 获取当前登录用户信息
+exports.getUserInfo = (req, res, next) => {
   try {
     res.json({
       code: 0,
-      user: req.user,
+      msg: "获取成功",
+      userInfo: req.user,
     });
   } catch (err) {
     next(err);

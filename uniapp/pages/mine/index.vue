@@ -29,31 +29,51 @@ export default {
       userInfo: {},
     };
   },
-  onShow() {
+  onReady() {
+    this.getCurrentUser(0);
+  },
+
+  onPullDownRefresh() {
     this.getCurrentUser();
   },
+
   methods: {
     // 获取当前登录用户
-    async getCurrentUser() {
+    async getCurrentUser(onReady) {
+      let that = this;
       const res = await getCurrentUserApi().catch((e) => {});
-      if (res && res.code == 401) {
-        this.$refs.mineNotify.show({
-          type: "warning",
-          color: "#ffffff",
-          bgColor: "#f9ae3d",
-          message: res.msg,
-          duration: 2000,
-          fontSize: 16,
-          safeAreaInsetTop: true,
-          complete() {
-            uni.navigateTo({
-              url: "../login/index",
-            });
-          },
-        });
-      } else {
-        this.userInfo = res.user;
+      if (res && res.code === 0) {
+        // !==0 : 首次加载不弹出提示
+        if (onReady !== 0) {
+          this.$refs.mineNotify.show({
+            type: "primary",
+            color: "#ffffff",
+            bgColor: "#3c9cff",
+            message: res.msg,
+            duration: 1000,
+            fontSize: 16,
+            safeAreaInsetTop: true,
+          });
+        }
+        this.userInfo = res && res.userInfo ? res.userInfo : "";
+      } else if (!res || (res && res.code === 401)) {
+        // !==0 : 首次加载不弹出提示
+        if (onReady !== 0) {
+          this.$refs.mineNotify.show({
+            type: "warning",
+            color: "#ffffff",
+            bgColor: "#f9ae3d",
+            message: res.msg || "请先登录",
+            duration: 1000,
+            fontSize: 16,
+            safeAreaInsetTop: true,
+            complete() {
+              that.mineNavToLogin();
+            },
+          });
+        }
       }
+      uni.stopPullDownRefresh();
     },
 
     mineNavToLogin() {

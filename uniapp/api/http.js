@@ -2,14 +2,16 @@
 
 import { BASE_URL } from "../config/config.default";
 
-export const httpRequest = ({ url, method, data }) => {
+export const httpRequest = ({ url, method, data = "", headers = {} }) => {
+  let authentication = uni.getStorageSync("token");
   return new Promise((resolve, reject) => {
-    uni.request({
+    wx.request({
       url: BASE_URL + url,
       method: method,
       data,
       header: {
-        authentication: localStorage.getItem("token"),
+        authentication,
+        ...headers,
       },
       success: (res) => {
         resolve(res.data);

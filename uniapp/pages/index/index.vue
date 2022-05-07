@@ -1,17 +1,5 @@
 <template>
   <view class="index-page">
-    <!-- click back to top start -->
-    <u-back-top
-      :scroll-top="scrollTop"
-      top="600"
-      right="40"
-      icon="arrow-up"
-      :duration="100"
-      :iconStyle="{ fontSize: '36rpx', color: '#ffffff' }"
-      :customStyle="{ backgroundColor: '#494f5c', opacity: '0.6' }"
-    ></u-back-top>
-    <!-- click back to top end -->
-
     <!-- search start -->
     <view class="index-search">
       <u-search
@@ -37,15 +25,11 @@
     <!-- post list start -->
     <view class="post-list" v-if="postList.length">
       <!-- 遮罩层 start -->
-      <view
-        v-if="isSearchFocus"
-        class="post-list-mask"
-        @click="isSearchFocus = false"
-      ></view>
+      <view v-if="isSearchFocus" class="post-list-mask"></view>
       <!-- 遮罩层 end -->
 
       <!-- post item start -->
-      <view class="post-item" v-for="item in postList" :key="item.post_id">
+      <view class="post-item" v-for="item in postList" :key="item.id">
         <!-- avatar -->
         <u-avatar
           class="post-item-avatar"
@@ -63,7 +47,6 @@
             :text="item.author.username"
             bold
             size="32rpx"
-            @click="handleClickPostItem(item)"
           ></u--text>
           <!-- updateTime -->
           <u--text
@@ -105,13 +88,14 @@
           <!-- describe end -->
 
           <!-- albums -->
-          <u-album
-            class="post-album"
-            v-if="item.albums && item.albums.length"
-            :urls="item.albums"
-            singleSize="320rpx"
-            multipleSize="140rpx"
-          ></u-album>
+          <view class="post-album" @click="handleClickPostItem(item)">
+            <u-album
+              v-if="item.albums && item.albums.length"
+              :urls="item.albums"
+              singleSize="320rpx"
+              multipleSize="140rpx"
+            ></u-album>
+          </view>
           <!-- actions start -->
           <view class="post-actions">
             <!-- like -->
@@ -145,11 +129,28 @@
         <!-- post content end -->
       </view>
       <!-- post item end -->
+
+      <!-- loadmore -->
+      <view class="loadmore">
+        <u-loadmore :status="loadmoreStatus" />
+      </view>
     </view>
     <!-- post list end -->
 
     <!-- notify -->
     <u-notify ref="indexNotify"></u-notify>
+
+    <!-- click back to top start -->
+    <u-back-top
+      :scroll-top="scrollTop"
+      top="600"
+      right="40"
+      icon="arrow-up"
+      :duration="100"
+      :iconStyle="{ fontSize: '36rpx', color: '#ffffff' }"
+      :customStyle="{ backgroundColor: '#494f5c', opacity: '0.6' }"
+    ></u-back-top>
+    <!-- click back to top end -->
   </view>
 </template>
 
@@ -162,20 +163,36 @@ export default {
     return {
       // 搜索框是否聚焦
       isSearchFocus: false,
-      // 页面的滚动距离, 通过 onPageScroll 生命周期获取
+      // 页面的滚动距离, 通过 onPageScroll 生命周期获取, 用于回到顶部
       scrollTop: 0,
-      // 回到顶部按钮的样式
       // 搜索的关键词
       keywords: "",
       // 帖子列表
       postList: [],
+      pageNum: 1,
+      pageSize: 10,
+      loadmoreStatus: "loadmore",
+      totalCount: 0,
     };
   },
 
-  onReachBottom() {},
+  onReachBottom() {
+    if (this.pageNum * this.pageSize >= this.totalCount) {
+      this.loadmoreStatus = "nomore";
+    } else {
+      this.pageNum += 1;
+      this.loadmoreStatus = "loading";
+      setTimeout(() => {
+        this.getAllPostList();
+      }, 500);
+    }
+  },
 
   onPullDownRefresh() {
-    this.getAllPostList(0);
+    setTimeout(() => {
+      this.getAllPostList(0);
+      uni.stopPullDownRefresh();
+    }, 500);
   },
 
   onPageScroll(e) {
@@ -183,19 +200,24 @@ export default {
   },
 
   onReady() {
+    // 开局先获取一次帖子列表
     this.getAllPostList();
+  },
+
+  onShow(options) {
+    if (options) console.log(options);
   },
 
   methods: {
     // 获取帖子列表
     async getAllPostList(onPullDownRefresh) {
-      const res = await getAllPostListApi().catch((e) => {});
+      const res = await getAllPostListApi({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+      }).catch((e) => {});
       console.log(res);
-      setTimeout(() => {
-        uni.stopPullDownRefresh();
-      }, 500);
       if (res && res.code === 0) {
-        // 只有下拉刷新时弹出提示
+        // ===0 : 只有下拉刷新时弹出提示
         if (onPullDownRefresh === 0) {
           this.$refs.indexNotify.show({
             type: "primary",
@@ -207,13 +229,14 @@ export default {
             safeAreaInsetTop: true,
           });
         }
-        this.postList = res.postList;
+        this.postList = this.postList.concat(res.postList);
+        this.totalCount = res.totalCount;
       } else {
         this.$refs.indexNotify.show({
-          type: "error",
+          type: "warning",
           color: "#ffffff",
           bgColor: "#f56c6c",
-          message: res.msg,
+          message: res && res.msg ? res : "q",
           duration: 1500,
           fontSize: 16,
           safeAreaInsetTop: true,
@@ -308,6 +331,9 @@ export default {
           }
         }
       }
+    }
+    .loadmore {
+      margin: 40rpx auto 64rpx;
     }
   }
 }

@@ -7,7 +7,7 @@ const postValidator = require("../middleware/validate/post");
 const auth = require("../middleware/auth");
 
 // 获取帖子列表
-router.get("/list", postController.getPost);
+router.get("/list", postController.getPostList);
 
 // 发帖
 router.post(
@@ -16,5 +16,8 @@ router.post(
   postValidator.createPost,
   postController.createPost
 );
+
+// 获取帖子
+router.get("/:postId", postValidator.getPostById, postController.getPostById);
 
 module.exports = router;

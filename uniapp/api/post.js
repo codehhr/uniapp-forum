@@ -1,10 +1,11 @@
 import { httpRequest } from "./http";
 
-// 帖子列表
-export const getAllPostListApi = () => {
+// 获取帖子列表
+export const getAllPostListApi = (data) => {
   return httpRequest({
     url: "/post/list",
     method: "GET",
+    data,
   });
 };
 
@@ -14,5 +15,13 @@ export const createPostApi = (data) => {
     url: "/post/create",
     method: "POST",
     data: { post: data },
+  });
+};
+
+// 获取帖子
+export const getPostByIdApi = (postId) => {
+  return httpRequest({
+    url: `/post/${postId}`,
+    method: "GET",
   });
 };

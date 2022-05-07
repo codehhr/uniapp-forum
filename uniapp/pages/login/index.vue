@@ -94,7 +94,7 @@ export default {
     async login(data) {
       const res = await loginApi(data).catch((e) => {});
       if (res && res.code === 0) {
-        localStorage.setItem("token", res.token || "");
+        uni.setStorageSync("token", res && res.token ? res.token : "");
         this.$refs.loginNotify.show({
           type: "primary",
           color: "#ffffff",
@@ -112,8 +112,8 @@ export default {
           type: "warning",
           color: "#ffffff",
           bgColor: "#f9ae3d",
-          message: this.extracteErrMsg(res.msg || []),
-          duration: 2000,
+          message: this.extracteErrMsg(res && res.msg ? res.msg : []),
+          duration: 1500,
           fontSize: 16,
           safeAreaInsetTop: true,
         });
