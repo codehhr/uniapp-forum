@@ -14,16 +14,6 @@
           size="28rpx"
         ></u--text>
       </view>
-      <!-- subtitle -->
-      <view class="subtitle">
-        <u--text
-          v-if="postItem.subtitle"
-          :lines="1"
-          :text="postItem.subtitle"
-          size="20rpx"
-          color="#ffffff"
-        ></u--text>
-      </view>
     </view>
     <!-- categories end -->
 

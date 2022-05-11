@@ -5,15 +5,17 @@ exports.getPostList = async (req, res, next) => {
   try {
     let { pageSize = 10, pageNum = 1 } = req.query;
     let postList = await Post.find({})
-      .sort({ createTime: -1, updateTime: -1 })
+      .sort({ createTime: -1, updateTime: 1 })
       .skip((pageNum - 1) * pageSize)
       .limit(pageNum * pageSize)
       .populate("author");
     let totalCount = await Post.find({}).countDocuments();
     if (!postList.length) {
       res.json({
-        code: -1,
-        msg: "暂没有人发帖",
+        code: 0,
+        msg: "暂时没有人发帖",
+        postList,
+        totalCount,
       });
     } else {
       res.json({

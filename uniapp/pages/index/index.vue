@@ -29,11 +29,13 @@
       <!-- 遮罩层 end -->
 
       <!-- post item start -->
-      <view class="post-item" v-for="item in postList" :key="item.id">
+      <view class="post-item" v-for="(item, index) in postList" :key="index">
         <!-- avatar -->
         <u-avatar
           class="post-item-avatar"
-          :src="item.author.avatar"
+          :src="
+            item && item.author && item.author.avatar ? item.author.avatar : ''
+          "
           mpde="widthFix"
           randomBgColor
           fontSize="40rpx"
@@ -44,7 +46,11 @@
           <u--text
             class="post-username"
             :lines="1"
-            :text="item.author.username"
+            :text="
+              item && item.author && item.author.username
+                ? item.author.username
+                : 'unknown'
+            "
             bold
             size="32rpx"
           ></u--text>
@@ -53,7 +59,7 @@
             class="post-updateTime"
             :lines="1"
             mode="date"
-            :text="item.updateTime"
+            :text="item && item.updateTime ? item.updateTime : ''"
             type="info"
             size="20rpx"
             @click="handleClickPostItem(item)"
@@ -62,7 +68,7 @@
           <u--text
             class="post-title"
             :lines="1"
-            :text="item.title"
+            :text="item && item.title ? item.title : ''"
             size="32rpx"
             margin="20rpx 0 0"
             @click="handleClickPostItem(item)"
@@ -71,12 +77,15 @@
           <view
             class="post-describe"
             v-if="
-              item.describe && /<(\w+)[^>]*>(.*?<\/\1>)?/.test(item.describe)
+              item
+                ? item.describe &&
+                  /<(\w+)[^>]*>(.*?<\/\1>)?/.test(item.describe)
+                : ''
             "
             v-html="item.describe"
           ></view>
           <u--text
-            v-else-if="item.describe && item.describe.length"
+            v-else-if="item ? item.describe && item.describe.length : ''"
             class="post-describe"
             :lines="3"
             :text="item.describe"
@@ -90,7 +99,7 @@
           <!-- albums -->
           <view class="post-album" @click="handleClickPostItem(item)">
             <u-album
-              v-if="item.albums && item.albums.length"
+              v-if="item ? item.albums && item.albums.length : []"
               :urls="item.albums"
               singleSize="320rpx"
               multipleSize="140rpx"
@@ -108,7 +117,11 @@
                 type="hand-up"
                 size="36rpx"
               ></uni-icons>
-              <u--text type="info" size="20rpx" :text="item.like"></u--text>
+              <u--text
+                type="info"
+                size="20rpx"
+                :text="item ? item.like : ''"
+              ></u--text>
             </view>
             <!-- comments -->
             <view class="post-actions-item" @click="handleClickComment(item)">
@@ -117,7 +130,11 @@
                 type="chat"
                 size="36rpx"
               ></uni-icons>
-              <u--text type="info" size="20rpx" :text="item.comments"></u--text>
+              <u--text
+                type="info"
+                size="20rpx"
+                :text="item ? item.comments : ''"
+              ></u--text>
             </view>
             <!-- share -->
             <view class="post-actions-item" @click="handleClickShare">
@@ -131,7 +148,7 @@
       <!-- post item end -->
 
       <!-- loadmore -->
-      <view class="loadmore">
+      <view class="loadmore" @click="loadMore">
         <u-loadmore :status="loadmoreStatus" />
       </view>
     </view>
@@ -177,15 +194,7 @@ export default {
   },
 
   onReachBottom() {
-    if (this.pageNum * this.pageSize >= this.totalCount) {
-      this.loadmoreStatus = "nomore";
-    } else {
-      this.pageNum += 1;
-      this.loadmoreStatus = "loading";
-      setTimeout(() => {
-        this.getAllPostList();
-      }, 500);
-    }
+    this.loadMore();
   },
 
   onPullDownRefresh() {
@@ -215,33 +224,54 @@ export default {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
       }).catch((e) => {});
-      console.log(res);
+      console.log(res.postList);
       if (res && res.code === 0) {
-        // ===0 : 只有下拉刷新时弹出提示
-        if (onPullDownRefresh === 0) {
-          this.$refs.indexNotify.show({
-            type: "primary",
-            color: "#ffffff",
-            bgColor: "#3c9cff",
-            message: res.msg,
-            duration: 1000,
-            fontSize: 16,
-            safeAreaInsetTop: true,
-          });
+        // ===0 : 只有下拉刷新时或没有人发帖时弹出提示
+        if (onPullDownRefresh === 0 || res.totalCount == 0) {
+          if (res && res.postList.length) {
+            this.$refs.indexNotify.show({
+              type: "primary",
+              color: "#ffffff",
+              bgColor: "#3c9cff",
+              message: res.msg,
+              duration: 1000,
+              fontSize: 16,
+              safeAreaInsetTop: true,
+            });
+          } else {
+            this.$refs.indexNotify.show({
+              type: "primary",
+              color: "#ffffff",
+              bgColor: "#3c9cff",
+              message: res.msg,
+              duration: 1500,
+              fontSize: 16,
+              safeAreaInsetTop: true,
+            });
+          }
         }
-        this.postList = this.postList.concat(res.postList);
-        this.totalCount = res.totalCount;
-      } else {
-        this.$refs.indexNotify.show({
-          type: "warning",
-          color: "#ffffff",
-          bgColor: "#f56c6c",
-          message: res && res.msg ? res : "q",
-          duration: 1500,
-          fontSize: 16,
-          safeAreaInsetTop: true,
-        });
       }
+      this.totalCount = res.totalCount;
+      // 查询没有结果时不渲染
+      if (this.pageNum == 1) {
+        this.postList = res.postList;
+      } else {
+        this.postList = this.postList.concat(res.postList);
+      }
+    },
+
+    // loadmore
+    loadMore() {
+      this.loadmoreStatus = "loading";
+      setTimeout(() => {
+        this.getAllPostList();
+        if (this.pageNum * this.pageSize >= this.totalCount) {
+          this.loadmoreStatus = "nomore";
+        } else {
+          this.pageNum += 1;
+          this.getAllPostList();
+        }
+      }, 500);
     },
 
     // 点击帖子

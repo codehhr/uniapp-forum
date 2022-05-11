@@ -8,10 +8,6 @@ const postSchema = new Schema({
     type: String,
     required: true,
   },
-  subtitle: {
-    type: String,
-    default: null,
-  },
   describe: {
     type: String,
     required: "",
@@ -21,7 +17,7 @@ const postSchema = new Schema({
     default: 0,
   },
   albums: {
-    type: [String],
+    type: [],
     default: [],
   },
   like: {

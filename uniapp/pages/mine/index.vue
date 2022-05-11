@@ -67,9 +67,6 @@ export default {
             duration: 1000,
             fontSize: 16,
             safeAreaInsetTop: true,
-            complete() {
-              that.mineNavToLogin();
-            },
           });
         }
       }

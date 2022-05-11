@@ -4,6 +4,7 @@
       ref="postForm"
       :model="postForm"
       label-position="top"
+      :label-width="320"
       :rules="postFormRules"
     >
       <!-- 标题 -->
@@ -11,6 +12,8 @@
         <uni-easyinput
           v-model="postForm.title"
           :focus="titleFocus"
+          :clearable="!!postForm.title"
+          :clearSize="20"
           placeholder="请输入标题"
           @confirm="validatePostForm('postForm')"
         />
@@ -35,7 +38,7 @@
               categoryList[postForm.category] &&
               categoryList[postForm.category].name
                 ? categoryList[postForm.category].name
-                : ''
+                : '全部'
             "
             @click="categoryListShow = true"
           ></u-button>
@@ -58,6 +61,8 @@
       <!-- describe -->
       <uni-forms-item label="内容" name="describe">
         <uni-easyinput
+          :clearable="!!postForm.describe"
+          :clearSize="20"
           type="textarea"
           autoHeight
           maxlength="-1"
@@ -68,21 +73,56 @@
         />
       </uni-forms-item>
 
-      <u-upload
-        :fileList="albums"
-        @afterRead="afterRead"
-        @delete="removePic"
-        name="albums"
-        multiple
-        width="320rpx"
-        height="180rpx"
-      >
-      </u-upload>
+      <!-- 上传图片 -->
+      <uni-forms-item label="添加图片地址">
+        <!-- urls -->
+        <view class="post-form-item-urls" v-for="item in urls" :key="item.id">
+          <uni-easyinput
+            v-model="item.url"
+            :clearable="!!item.url"
+            placeholder="请输入图片地址"
+            @confirm="addUrl"
+          />
+          <!-- remove -->
+          <button
+            class="url-remove"
+            size="mini"
+            type="primary"
+            plain
+            @click="removeUrl(item.id)"
+          >
+            <u-icon name="close"></u-icon>
+          </button>
+          <!-- <view class="url-remove">
+          </view> -->
+        </view>
+
+        <!-- add -->
+        <view class="url-add">
+          <u-button
+            type="primary"
+            plain
+            text="点击添加图片地址"
+            @click="addUrl"
+          ></u-button>
+        </view>
+
+        <!-- 上传图片 -->
+        <u--text type="info" text="上传图片" margin="40rpx 0 20rpx"></u--text>
+        <u-upload
+          :fileList="albums"
+          @afterRead="afterRead"
+          @delete="removePic"
+          name="albums"
+          multiple
+          width="320rpx"
+          height="180rpx"
+        >
+        </u-upload>
+      </uni-forms-item>
 
       <!-- 发布-->
-      <u-button type="primary" @click="validatePostForm('postForm')">
-        发布
-      </u-button>
+      <u-button type="primary" @click="authenticate">发布</u-button>
     </uni-forms>
 
     <!-- notify -->
@@ -99,17 +139,36 @@
       :customStyle="{ backgroundColor: '#494f5c', opacity: '0.6' }"
     ></u-back-top>
     <!-- click back to top end -->
+
+    <!-- load start -->
+    <view class="post-loading" v-if="postLoading">
+      <u-loading-icon
+        :show="true"
+        :text="`正在上传第 ${uploadImgIndex + 1} 张图片`"
+        :vertical="true"
+        mode="semicircle"
+        size="80rpx"
+        textSize="40rpx"
+      ></u-loading-icon>
+    </view>
+    <!-- load end -->
   </view>
 </template>
 
 <script>
 import { createPostApi } from "../../api/post";
-import { uploadImgApi } from "../../config/config.default";
+import { uploadImgApi, authenticateApi } from "../../api/common";
 
 export default {
   data() {
     return {
+      postLoading: false,
+      uploadImgIndex: 0,
+      loadingText: "",
       albums: [],
+      urls: [],
+      albumsLength: 0,
+      unUploadImglists: [],
       scrollTop: 0,
       titleFocus: false,
       describeFocus: false,
@@ -130,18 +189,7 @@ export default {
       categoryListShow: false,
       postForm: {
         category: 0,
-        albums: [
-          // "https://cdn.uviewui.com/uview/album/1.jpg",
-          // "https://cdn.uviewui.com/uview/album/2.jpg",
-          // "https://cdn.uviewui.com/uview/album/3.jpg",
-          // "https://cdn.uviewui.com/uview/album/4.jpg",
-          // "https://cdn.uviewui.com/uview/album/5.jpg",
-          // "https://cdn.uviewui.com/uview/album/6.jpg",
-          // "https://cdn.uviewui.com/uview/album/7.jpg",
-          // "https://cdn.uviewui.com/uview/album/8.jpg",
-          // "https://cdn.uviewui.com/uview/album/9.jpg",
-          // "https://cdn.uviewui.com/uview/album/10.jpg",
-        ],
+        albums: [],
       },
       postFormRules: {
         title: {
@@ -169,6 +217,29 @@ export default {
   },
 
   methods: {
+    // 身份验证
+    async authenticate() {
+      const res = await authenticateApi("/post/create").catch((e) => {});
+      if (res && res.code == 401) {
+        this.$refs.postNotify.show({
+          type: "warning",
+          color: "#ffffff",
+          bgColor: "#f9ae3d",
+          message: res && res.msg ? res.msg : "请先登录",
+          duration: 1000,
+          fontSize: 16,
+          safeAreaInsetTop: true,
+          complete() {
+            uni.navigateTo({
+              url: "../login/index",
+            });
+          },
+        });
+      } else {
+        this.validatePostForm("postForm");
+      }
+    },
+
     // 验证 form
     validatePostForm(ref) {
       if (!this.postForm.title) {
@@ -179,7 +250,8 @@ export default {
       this.$refs[ref]
         .validate()
         .then((data) => {
-          this.createPost();
+          this.postLoading = true;
+          this.handleImgUpload();
         })
         .catch((e) => {});
     },
@@ -187,9 +259,9 @@ export default {
     // 发布
     async createPost() {
       const res = await createPostApi(this.postForm).catch((e) => {});
-      console.log(res);
       if (res && res.code === 0) {
         this.postForm = {};
+        // this.postLoading = false;
         this.$refs.postNotify.show({
           type: "primary",
           color: "#ffffff",
@@ -232,6 +304,20 @@ export default {
       }
     },
 
+    // 整理 postForm
+    handlePostForm() {
+      this.postForm.albums = [];
+      this.urls.map((item) => {
+        if (item.url) this.postForm.albums.push(item.url);
+      });
+      this.urls = [];
+      this.albums.map((item) => {
+        this.postForm.albums.push(item.url);
+      });
+      this.albums = [];
+      this.createPost();
+    },
+
     // 选择分类
     handleSelectCategory(item) {
       this.postForm.category = item.value;
@@ -243,9 +329,15 @@ export default {
     },
 
     // 新增图片
-    async afterRead(event) {
-      let tempImglists = event.file;
-      let fileListLen = this.albums.length;
+    afterRead(event) {
+      // 统计未上传的图片
+      this.unUploadImglists = this.unUploadImglists.concat(event.file);
+      // 当前选择的图片，选择单个为对象，选择多个为数组
+      let tempImglists = [].concat(event.file);
+      // 上传图片前的 albums 长度
+      if (!this.albumsLength) {
+        this.albumsListLength = this.albums.length;
+      }
       tempImglists.map((item) => {
         this.albums.push({
           ...item,
@@ -253,20 +345,37 @@ export default {
           // message: "待上传",
         });
       });
-      for (let i = 0; i < tempImglists.length; i++) {
-        const url = await this.uploadImg(tempImglists[i]);
-        let item = this.albums[fileListLen];
-        console.log(item);
-        this.albums.splice(
-          fileListLen,
-          1,
-          Object.assign(item, {
-            status: "success",
-            // message: "",
-            url,
-          })
-        );
-        fileListLen++;
+    },
+
+    // 处理上传图片
+    handleImgUpload() {
+      let albumsLength = this.albumsLength;
+      let unUploadImglistsLength = this.unUploadImglists.length;
+      let uploadCount = 0;
+      if (unUploadImglistsLength) {
+        this.unUploadImglists.map(async (item, index) => {
+          // item.status = "uploading";
+          // item.message = "正在上传";
+          let url = await this.uploadImg(item);
+          uploadCount += 1;
+          this.uploadImgIndex = uploadCount;
+          this.albums.splice(
+            albumsLength + index,
+            1,
+            Object.assign(item, {
+              // status: "success",
+              // message: "已上传",
+              url,
+            })
+          );
+          if (uploadCount == unUploadImglistsLength) {
+            this.handlePostForm();
+          }
+        });
+        this.albumsLength = 0;
+        this.unUploadImglists = [];
+      } else {
+        this.createPost();
       }
     },
 
@@ -284,8 +393,24 @@ export default {
           success: (res) => {
             resolve(JSON.parse(res.data).data.url);
           },
+          fail: (e) => {},
         });
       });
+    },
+
+    // 添加图片地址
+    addUrl() {
+      this.urls.push({
+        id: Date.now(),
+      });
+    },
+
+    // 移除图片地址
+    removeUrl(id) {
+      this.urls.splice(
+        this.urls.findIndex((v) => v.id == id),
+        1
+      );
     },
   },
 };
@@ -293,7 +418,7 @@ export default {
 
 <style lang="less" scoped>
 .post-page {
-  padding: 40rpx;
+  padding: 20rpx 40rpx 160rpx;
   background-color: #ffffff;
 
   .post-category-mask-outer {
@@ -304,8 +429,34 @@ export default {
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 11;
     }
+  }
+  .post-form-item-urls {
+    margin: 0 auto 20rpx;
+    display: flex;
+    justify-content: space-between;
+    .url-remove {
+      margin: 0 10rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60rpx;
+    }
+  }
+  .url-add {
+    margin: 20rpx auto;
+  }
+  .post-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(207, 207, 207, 0.4);
+    z-index: 999;
   }
 }
 </style>
