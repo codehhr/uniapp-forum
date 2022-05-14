@@ -1,7 +1,7 @@
 <script>
 export default {
   globalData: {
-    currentPostItem: {},
+    userInfo: {},
   },
   onLaunch: function () {},
   onShow: function () {},

@@ -199,7 +199,6 @@
 
 <script>
 import { getAllPostListApi } from "../../api/post";
-const app = getApp();
 
 export default {
   data() {
@@ -278,10 +277,6 @@ export default {
     this.getAllPostList();
   },
 
-  onShow(options) {
-    if (options) console.log(options);
-  },
-
   methods: {
     // 获取帖子列表
     async getAllPostList() {
@@ -304,7 +299,7 @@ export default {
       }
       this.totalCount = res.totalCount;
       if (this.pageNum == 1 || res.totalCount == 0) {
-        this.postList = res.postList;
+        this.postList = res && res.postList ? res.postList : [];
       } else {
         this.postList = this.postList.concat(res.postList);
       }
@@ -335,7 +330,6 @@ export default {
 
     // 点击帖子
     handleClickPostItem(item) {
-      app.globalData.currentPostItem = item;
       uni.navigateTo({
         url: "../post-detail/index",
       });
@@ -348,7 +342,6 @@ export default {
     },
     // 评论
     handleClickComment(item) {
-      app.globalData.currentPostItem = item;
       uni.navigateTo({
         url: "../post-detail/index",
       });

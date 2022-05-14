@@ -42,7 +42,8 @@
     {
       "path": "pages/mypost/index",
       "style": {
-        "navigationBarTitleText": "我发布的 | Forum"
+        "navigationBarTitleText": "我发布的 | Forum",
+        "enablePullDownRefresh": true
       }
     }
   ],

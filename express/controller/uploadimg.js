@@ -27,7 +27,7 @@ exports.getImgUrl = (req, res, next) => {
     res.json({
       code: 0,
       msg: "图片上传成功",
-      url: `http://127.0.0.1:9000/static/imgs/${originalname}`,
+      url: `http://192.168.1.107:9000/imgs/${originalname}`,
     });
   } catch (err) {
     next(err);

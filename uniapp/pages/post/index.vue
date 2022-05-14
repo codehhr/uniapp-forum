@@ -170,9 +170,7 @@ export default {
   data() {
     return {
       postLoading: false,
-      uploadImgIndex: 0,
       uploadImgCount: 0,
-      loadingText: "",
       albums: [],
       urls: [],
       albumsLength: 0,
@@ -296,8 +294,7 @@ export default {
     async createPost() {
       const res = await createPostApi(this.postForm).catch((e) => {});
       if (res && res.code === 0) {
-        this.postForm = {};
-        this.postLoading = false;
+        this.initPost();
         this.$refs.postNotify.show({
           type: "primary",
           color: "#ffffff",
@@ -338,6 +335,17 @@ export default {
           safeAreaInsetTop: true,
         });
       }
+    },
+
+    // 初始化
+    initPost() {
+      this.postLoading = false;
+      this.albumsLength = 0;
+      this.unUploadImglists = [];
+      this.postForm = {};
+      this.uploadImgCount = 0;
+      this.albums = [];
+      this.urls = [];
     },
 
     // 整理 postForm
@@ -391,8 +399,6 @@ export default {
       let unUploadImglistsLength = this.unUploadImglists.length;
       if (unUploadImglistsLength) {
         this.unUploadImglists.map(async (item, index) => {
-          let count = index + 1;
-          this.uploadImgIndex = count;
           let url = await this.uploadImg(item).catch((e) => {});
           this.albums.splice(
             albumsLength + index,
@@ -407,8 +413,6 @@ export default {
             this.handlePostForm();
           }
         });
-        this.albumsLength = 0;
-        this.unUploadImglists = [];
       } else {
         this.createPost();
       }

@@ -3,15 +3,12 @@ const { Post } = require("../model/index");
 // get postList
 exports.getPostList = async (req, res, next) => {
   try {
-    let { pageSize = 10, pageNum = 1, category = 0 } = req.query;
-    let queryParams = {
-      pageNum,
-      pageSize,
-    };
-    if (category != 0) {
-      Object.assign(queryParams, {
-        category,
-      });
+    let { pageSize = 10, pageNum = 1 } = req.query;
+    let queryParams = {};
+    for (let key in req.query) {
+      if (req.query[key]) {
+        Object.assign(queryParams, { key: req.query[key] });
+      }
     }
     let postList = await Post.find(queryParams)
       .sort({ updateTime: -1, createTime: -1 })

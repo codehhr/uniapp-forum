@@ -15,7 +15,7 @@
     <u-button type="primary" text="登录" @click="mineNavToLogin"></u-button>
     <u-button type="primary" text="注册" @click="mineNavToRegister"></u-button>
 
-    <view class="get-my-postlist">
+    <view class="get-my-postlist" v-if="userInfo">
       <u-button
         type="primary"
         plain
@@ -31,6 +31,7 @@
 
 <script>
 import { getCurrentUserApi } from "../../api/user";
+const app = getApp();
 
 export default {
   data() {
@@ -64,7 +65,9 @@ export default {
             safeAreaInsetTop: true,
           });
         }
-        this.userInfo = res && res.userInfo ? res.userInfo : "";
+        this.userInfo = res && res.userInfo ? res.userInfo : {};
+        // app.globalData.userInfo = res && res.userInfo ? res.userInfo : {};
+        uni.setStorageSync("userInfo", res && res.userInfo ? res.userInfo : {});
       } else if (!res || (res && res.code === 401)) {
         // !==0 : 首次加载不弹出提示
         if (onReady !== 0) {
