@@ -11,7 +11,12 @@ const auth = require("../middleware/auth");
 router.get("/list", postController.getPostList);
 
 // 上传图片
-router.post("/upload", auth, imgController.storage, imgController.getImgUrl);
+router.post(
+  "/upload",
+  auth,
+  imgController.uploadImgStorage,
+  imgController.getImgUrl
+);
 
 // 发帖
 router.post(

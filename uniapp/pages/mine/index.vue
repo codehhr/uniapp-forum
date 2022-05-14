@@ -21,7 +21,7 @@
         plain
         text="我发布的"
         size="small"
-        @click=""
+        @click="mineNavToPostList"
       ></u-button>
     </view>
     <!-- notify -->
@@ -90,6 +90,11 @@ export default {
     mineNavToRegister() {
       uni.navigateTo({
         url: "../register/index",
+      });
+    },
+    mineNavToPostList() {
+      uni.navigateTo({
+        url: "../mypost/index",
       });
     },
   },

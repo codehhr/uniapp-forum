@@ -3,7 +3,7 @@ const router = require("./router");
 const morgan = require("morgan");
 const cors = require("cors");
 const errHandler = require("./middleware/errHandler");
-const path = require("path");
+// const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 9000;
 require("./model");
