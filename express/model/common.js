@@ -2,11 +2,11 @@
 
 module.exports = {
   createdTime: {
-    type: String,
+    type: Number,
     default: Date.now(),
   },
   updateTime: {
-    type: String,
+    type: Number,
     default: Date.now(),
   },
 };

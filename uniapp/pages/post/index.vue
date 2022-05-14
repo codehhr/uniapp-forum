@@ -113,6 +113,7 @@
           :fileList="albums"
           @afterRead="afterRead"
           @delete="removePic"
+          uploadIcon="plus"
           name="albums"
           multiple
           width="320rpx"
@@ -122,7 +123,9 @@
       </uni-forms-item>
 
       <!-- 发布-->
-      <u-button type="primary" @click="authenticate">发布</u-button>
+      <view class="post-submit">
+        <u-button type="primary" @click="authenticate">发布</u-button>
+      </view>
     </uni-forms>
 
     <!-- notify -->
@@ -141,29 +144,34 @@
     <!-- click back to top end -->
 
     <!-- load start -->
-    <view class="post-loading" v-if="postLoading">
-      <u-loading-icon
-        :show="true"
-        :text="`正在上传第 ${uploadImgIndex + 1} 张图片`"
-        :vertical="true"
-        mode="semicircle"
-        size="80rpx"
-        textSize="40rpx"
-      ></u-loading-icon>
-    </view>
+    <u-overlay :show="postLoading">
+      <view class="loading-content-wrap">
+        <u-loading-icon
+          :show="true"
+          color="#ffffff"
+          loading-color="#ffffff"
+          :vertical="true"
+          mode="semicircle"
+          size="120rpx"
+          textSize="40rpx"
+        ></u-loading-icon>
+      </view>
+    </u-overlay>
     <!-- load end -->
   </view>
 </template>
 
 <script>
 import { createPostApi } from "../../api/post";
-import { uploadImgApi, authenticateApi } from "../../api/common";
+import { authenticateApi } from "../../api/common";
+import { BASE_URL } from "../../config/config.default";
 
 export default {
   data() {
     return {
       postLoading: false,
       uploadImgIndex: 0,
+      uploadImgCount: 0,
       loadingText: "",
       albums: [],
       urls: [],
@@ -178,12 +186,36 @@ export default {
           value: 0,
         },
         {
-          name: "科技",
+          name: "推荐",
           value: 1,
         },
         {
-          name: "医疗",
+          name: "电影",
           value: 2,
+        },
+        {
+          name: "科技",
+          value: 3,
+        },
+        {
+          name: "音乐",
+          value: 4,
+        },
+        {
+          name: "美食",
+          value: 5,
+        },
+        {
+          name: "文化",
+          value: 6,
+        },
+        {
+          name: "财经",
+          value: 7,
+        },
+        {
+          name: "二手",
+          value: 8,
         },
       ],
       categoryListShow: false,
@@ -251,7 +283,11 @@ export default {
         .validate()
         .then((data) => {
           this.postLoading = true;
-          this.handleImgUpload();
+          if (this.unUploadImglists.length) {
+            this.handleImgUpload();
+          } else {
+            this.handlePostForm();
+          }
         })
         .catch((e) => {});
     },
@@ -261,7 +297,7 @@ export default {
       const res = await createPostApi(this.postForm).catch((e) => {});
       if (res && res.code === 0) {
         this.postForm = {};
-        // this.postLoading = false;
+        this.postLoading = false;
         this.$refs.postNotify.show({
           type: "primary",
           color: "#ffffff",
@@ -308,11 +344,11 @@ export default {
     handlePostForm() {
       this.postForm.albums = [];
       this.urls.map((item) => {
-        if (item.url) this.postForm.albums.push(item.url);
+        if (item.url) this.postForm.albums.push({ url: item.url });
       });
       this.urls = [];
       this.albums.map((item) => {
-        this.postForm.albums.push(item.url);
+        this.postForm.albums.push({ url: item.url });
       });
       this.albums = [];
       this.createPost();
@@ -325,7 +361,9 @@ export default {
 
     // 移除图片
     removePic(event) {
+      console.log(event);
       this.albums.splice(event.index, 1);
+      this.unUploadImglists.splice(event.index, 1);
     },
 
     // 新增图片
@@ -351,14 +389,11 @@ export default {
     handleImgUpload() {
       let albumsLength = this.albumsLength;
       let unUploadImglistsLength = this.unUploadImglists.length;
-      let uploadCount = 0;
       if (unUploadImglistsLength) {
         this.unUploadImglists.map(async (item, index) => {
-          // item.status = "uploading";
-          // item.message = "正在上传";
-          let url = await this.uploadImg(item);
-          uploadCount += 1;
-          this.uploadImgIndex = uploadCount;
+          let count = index + 1;
+          this.uploadImgIndex = count;
+          let url = await this.uploadImg(item).catch((e) => {});
           this.albums.splice(
             albumsLength + index,
             1,
@@ -368,7 +403,7 @@ export default {
               url,
             })
           );
-          if (uploadCount == unUploadImglistsLength) {
+          if (++this.uploadImgCount == unUploadImglistsLength) {
             this.handlePostForm();
           }
         });
@@ -383,15 +418,15 @@ export default {
     uploadImg(item) {
       return new Promise((resolve, reject) => {
         uni.uploadFile({
-          url: uploadImgApi.api,
+          url: `${BASE_URL}/post/upload`,
           filePath: item.url,
-          name: "image",
-          formData: {
-            key: uploadImgApi.key,
-            name: item.name,
+          name: "img",
+          header: {
+            authentication: uni.getStorageSync("token"),
           },
+          formData: {},
           success: (res) => {
-            resolve(JSON.parse(res.data).data.url);
+            resolve(JSON.parse(res.data).url);
           },
           fail: (e) => {},
         });
@@ -418,7 +453,8 @@ export default {
 
 <style lang="less" scoped>
 .post-page {
-  padding: 20rpx 40rpx 160rpx;
+  position: relative;
+  padding: 20rpx 40rpx 320rpx;
   background-color: #ffffff;
 
   .post-category-mask-outer {
@@ -446,17 +482,16 @@ export default {
   .url-add {
     margin: 20rpx auto;
   }
-  .post-loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+  .post-submit {
+    position: sticky;
+    bottom: 88rpx;
+  }
+
+  .loading-content-wrap {
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(207, 207, 207, 0.4);
-    z-index: 999;
   }
 }
 </style>

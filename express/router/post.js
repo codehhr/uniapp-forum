@@ -3,11 +3,15 @@
 const express = require("express");
 const router = express.Router();
 const postController = require("../controller/post");
+const imgController = require("../controller/uploadimg");
 const postValidator = require("../middleware/validate/post");
 const auth = require("../middleware/auth");
 
 // 获取帖子列表
 router.get("/list", postController.getPostList);
+
+// 上传图片
+router.post("/upload", auth, imgController.storage, imgController.getImgUrl);
 
 // 发帖
 router.post(

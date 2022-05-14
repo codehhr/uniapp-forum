@@ -8,13 +8,6 @@
       }
     },
     {
-      "path": "pages/categories/index",
-      "style": {
-        "navigationBarTitleText": "分类 | Forum",
-        "enablePullDownRefresh": true
-      }
-    },
-    {
       "path": "pages/post/index",
       "style": {
         "navigationBarTitleText": "新建 | Forum"
@@ -45,6 +38,12 @@
       "style": {
         "navigationBarTitleText": "注册 | Forum"
       }
+    },
+    {
+      "path": "pages/mypost/index",
+      "style": {
+        "navigationBarTitleText": "我发布的 | Forum"
+      }
     }
   ],
   "globalStyle": {
@@ -68,12 +67,6 @@
         "iconPath": "static/tabbar/home.png",
         "selectedIconPath": "static/tabbar/home-selected.png",
         "text": "首页"
-      },
-      {
-        "pagePath": "pages/categories/index",
-        "iconPath": "static/tabbar/categories.png",
-        "selectedIconPath": "static/tabbar/categories-selected.png",
-        "text": "分类"
       },
       {
         "pagePath": "pages/post/index",

@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
+    default: "",
   },
   email: {
     type: String,
@@ -21,6 +22,10 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: "https://cdn.uviewui.com/uview/album/1.jpg",
+  },
+  intro: {
+    type: String,
+    default: "",
   },
   ...common,
 });

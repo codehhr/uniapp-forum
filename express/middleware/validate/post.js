@@ -16,3 +16,6 @@ exports.getPostById = validate([
     }
   }),
 ]);
+
+// 上传图片
+// exports.uploadImg = uploadImg([]);

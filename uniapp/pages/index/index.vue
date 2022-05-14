@@ -22,6 +22,11 @@
     </view>
     <!-- search end -->
 
+    <!-- category tab -->
+    <view class="category-list">
+      <u-tabs :list="categoryList" @click="HandleClickCategory"></u-tabs>
+    </view>
+
     <!-- post list start -->
     <view class="post-list" v-if="postList.length">
       <!-- 遮罩层 start -->
@@ -58,8 +63,11 @@
           <u--text
             class="post-updateTime"
             :lines="1"
-            mode="date"
-            :text="item && item.updateTime ? item.updateTime : ''"
+            :text="
+              item && item.updateTime
+                ? new Date(item.updateTime).toLocaleString()
+                : ''
+            "
             type="info"
             size="20rpx"
             @click="handleClickPostItem(item)"
@@ -95,16 +103,27 @@
           <!-- 空 describe ，占位 -->
           <view v-else class="post-describe"></view>
           <!-- describe end -->
-
           <!-- albums -->
           <view class="post-album" @click="handleClickPostItem(item)">
             <u-album
-              v-if="item ? item.albums && item.albums.length : []"
+              v-if="item ? item.albums && item.albums.length : ''"
               :urls="item.albums"
+              keyName="url"
               singleSize="320rpx"
               multipleSize="140rpx"
             ></u-album>
           </view>
+
+          <!-- 分类徽标 start -->
+          <view class="category-tag">
+            <u-badge
+              type="info"
+              max="99"
+              :value="categoryList[item.category].name"
+            ></u-badge>
+          </view>
+          <!-- 分类徽标 end -->
+
           <!-- actions start -->
           <view class="post-actions">
             <!-- like -->
@@ -153,6 +172,13 @@
       </view>
     </view>
     <!-- post list end -->
+    <view v-else class="empty-data">
+      <u-empty
+        mode="data"
+        text="暂时没有人发帖"
+        icon="http://cdn.uviewui.com/uview/empty/data.png"
+      />
+    </view>
 
     <!-- notify -->
     <u-notify ref="indexNotify"></u-notify>
@@ -188,8 +214,47 @@ export default {
       postList: [],
       pageNum: 1,
       pageSize: 10,
+      category: 0,
       loadmoreStatus: "loadmore",
       totalCount: 0,
+      categoryList: [
+        {
+          name: "全部",
+          value: 0,
+        },
+        {
+          name: "推荐",
+          value: 1,
+        },
+        {
+          name: "电影",
+          value: 2,
+        },
+        {
+          name: "科技",
+          value: 3,
+        },
+        {
+          name: "音乐",
+          value: 4,
+        },
+        {
+          name: "美食",
+          value: 5,
+        },
+        {
+          name: "文化",
+          value: 6,
+        },
+        {
+          name: "财经",
+          value: 7,
+        },
+        {
+          name: "二手",
+          value: 8,
+        },
+      ],
     };
   },
 
@@ -199,7 +264,7 @@ export default {
 
   onPullDownRefresh() {
     setTimeout(() => {
-      this.getAllPostList(0);
+      this.getAllPostList();
       uni.stopPullDownRefresh();
     }, 500);
   },
@@ -219,41 +284,26 @@ export default {
 
   methods: {
     // 获取帖子列表
-    async getAllPostList(onPullDownRefresh) {
+    async getAllPostList() {
       const res = await getAllPostListApi({
         pageNum: this.pageNum,
         pageSize: this.pageSize,
+        category: this.category,
       }).catch((e) => {});
       console.log(res.postList);
       if (res && res.code === 0) {
-        // ===0 : 只有下拉刷新时或没有人发帖时弹出提示
-        if (onPullDownRefresh === 0 || res.totalCount == 0) {
-          if (res && res.postList.length) {
-            this.$refs.indexNotify.show({
-              type: "primary",
-              color: "#ffffff",
-              bgColor: "#3c9cff",
-              message: res.msg,
-              duration: 1000,
-              fontSize: 16,
-              safeAreaInsetTop: true,
-            });
-          } else {
-            this.$refs.indexNotify.show({
-              type: "primary",
-              color: "#ffffff",
-              bgColor: "#3c9cff",
-              message: res.msg,
-              duration: 1500,
-              fontSize: 16,
-              safeAreaInsetTop: true,
-            });
-          }
-        }
+        this.$refs.indexNotify.show({
+          type: "primary",
+          color: "#ffffff",
+          bgColor: "#3c9cff",
+          message: res.msg,
+          duration: 1000,
+          fontSize: 16,
+          safeAreaInsetTop: true,
+        });
       }
       this.totalCount = res.totalCount;
-      // 查询没有结果时不渲染
-      if (this.pageNum == 1) {
+      if (this.pageNum == 1 || res.totalCount == 0) {
         this.postList = res.postList;
       } else {
         this.postList = this.postList.concat(res.postList);
@@ -264,14 +314,23 @@ export default {
     loadMore() {
       this.loadmoreStatus = "loading";
       setTimeout(() => {
+        if (this.totalCount >= this.pageSize) {
+          this.pageNum++;
+        }
         this.getAllPostList();
         if (this.pageNum * this.pageSize >= this.totalCount) {
           this.loadmoreStatus = "nomore";
         } else {
-          this.pageNum += 1;
+          this.pageNum++;
           this.getAllPostList();
         }
       }, 500);
+    },
+
+    // 点击分类
+    HandleClickCategory(item) {
+      this.category = item.value;
+      this.getAllPostList();
     },
 
     // 点击帖子
@@ -320,10 +379,9 @@ export default {
 <style lang="less" scoped>
 .index-page {
   background-color: #f1f1f1;
-  .index-search {
-    margin: 20rpx 0 0 !important;
-    padding: 0 12rpx !important;
-    width: 96%;
+  .category-list {
+    margin-top: 20rpx;
+    background-color: #ffffff;
   }
   .post-list {
     position: relative;
@@ -336,8 +394,8 @@ export default {
       background-color: rgba(241, 241, 241, 0.8);
     }
     .post-item {
-      margin: 20rpx 0;
-      padding: 20rpx;
+      margin-bottom: 20rpx;
+      padding: 40rpx 20rpx;
       display: flex;
       align-items: flex-start;
       background-color: #ffffff;
@@ -346,6 +404,13 @@ export default {
         width: 100%;
         .post-describe {
           padding: 10rpx 0;
+        }
+      }
+      .category-tag {
+        margin-top: 20rpx;
+        .u-badge.u-badge--not-dot.u-badge--info {
+          padding: 4rpx 10rpx;
+          display: initial;
         }
       }
       .post-actions {
@@ -366,10 +431,16 @@ export default {
       margin: 40rpx auto 64rpx;
     }
   }
+  .empty-data {
+    position: relative;
+    top: 200rpx;
+  }
 }
 </style>
 <style lang="less">
 .index-search {
-  margin: 16rpx 28rpx !important;
+  margin: 20rpx 0 0 !important;
+  padding: 0 12rpx !important;
+  width: 96%;
 }
 </style>

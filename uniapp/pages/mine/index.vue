@@ -15,6 +15,15 @@
     <u-button type="primary" text="登录" @click="mineNavToLogin"></u-button>
     <u-button type="primary" text="注册" @click="mineNavToRegister"></u-button>
 
+    <view class="get-my-postlist">
+      <u-button
+        type="primary"
+        plain
+        text="我发布的"
+        size="small"
+        @click=""
+      ></u-button>
+    </view>
     <!-- notify -->
     <u-notify ref="mineNotify"></u-notify>
   </view>
@@ -93,6 +102,10 @@ export default {
   background-color: #ffffff;
   button {
     margin: 40rpx 0;
+  }
+  .get-my-postlist {
+    width: 200rpx;
+    margin: 0 auto;
   }
 }
 </style>
