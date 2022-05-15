@@ -49,4 +49,7 @@ router.get(
   postController.getPostById
 );
 
+// 发布评论
+router.post("/comment", auth, postController.createComment);
+
 module.exports = router;

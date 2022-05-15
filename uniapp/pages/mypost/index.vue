@@ -503,9 +503,9 @@ export default {
       .post-actions {
         margin-top: 32rpx;
         display: flex;
-        justify-content: flex-start;
+        justify-content: center;
         .post-actions-item {
-          margin-right: 96rpx;
+          margin-right: 64rpx;
           display: flex;
         }
       }

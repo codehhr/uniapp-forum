@@ -1,127 +1,99 @@
 <template>
   <view class="post-detail-page">
-    <!-- post list start -->
+    <!-- category start -->
+    <view class="category">
+      <button class="category-btn">
+        {{ categoryList[postItem.category].name }}
+      </button>
+      <!-- title -->
+      <view class="title">
+        <u--text
+          v-if="postItem.title"
+          :lines="1"
+          :text="postItem.title"
+          margin="20rpx 0 10rpx"
+          color="#ffffff"
+          size="32rpx"
+        ></u--text>
+      </view>
+    </view>
+    <!-- categories end -->
 
-    <!-- post item start -->
-    <view class="post-item" v-for="(item, index) in postList" :key="index">
-      <!-- avatar -->
-      <u-avatar
-        class="post-item-avatar"
-        :src="
-          item && item.author && item.author.avatar ? item.author.avatar : ''
-        "
-        mpde="widthFix"
-        randomBgColor
-        fontSize="40rpx"
-      ></u-avatar>
+    <!-- post-item start -->
+    <view class="post-item">
+      <!-- user info start -->
+      <view class="user-info">
+        <!-- avatar -->
+        <u-avatar
+          class="post-item-avatar"
+          icon="github-circle-fill"
+          mpde="widthFix"
+          randomBgColor
+          fontSize="64rpx"
+        ></u-avatar>
+        <!-- <u--text
+          class="username"
+          :lines="1"
+          :text="postItem.user_name"
+          bold
+          size="16"
+        ></u--text> -->
+        <u--text
+          class="username"
+          :lines="1"
+          :text="postItem.author.username"
+          bold
+          size="16"
+        ></u--text>
+      </view>
+      <!-- user info end -->
+
       <!-- post content start -->
       <view class="post-content">
-        <!-- username -->
-        <u--text
-          class="post-username"
-          :lines="1"
-          :text="
-            item && item.author && item.author.username
-              ? item.author.username
-              : 'unknown'
-          "
-          bold
-          size="32rpx"
-        ></u--text>
-        <!-- updateTime -->
-        <u--text
-          class="post-updateTime"
-          :lines="1"
-          :text="
-            item && item.updateTime
-              ? new Date(item.updateTime).toLocaleString()
-              : ''
-          "
-          type="info"
-          size="20rpx"
-          @click="handleClickPostItem(item)"
-        ></u--text>
-        <!-- title -->
-        <u--text
-          class="post-title"
-          :lines="1"
-          :text="item && item.title ? item.title : ''"
-          size="32rpx"
-          margin="20rpx 0 0"
-          @click="handleClickPostItem(item)"
-        ></u--text>
         <!-- describe start -->
         <view
-          class="post-describe"
+          class="describe"
           v-if="
-            item
-              ? item.describe && /<(\w+)[^>]*>(.*?<\/\1>)?/.test(item.describe)
-              : ''
+            postItem.describe &&
+            /<(\w+)[^>]*>(.*?<\/\1>)?/.test(postItem.describe)
           "
-          v-html="item.describe"
+          v-html="postItem.describe"
         ></view>
+        <!-- :lines="3" -->
         <u--text
-          v-else-if="item ? item.describe && item.describe.length : ''"
-          class="post-describe"
-          :lines="3"
-          :text="item.describe"
+          v-else-if="postItem.describe && postItem.describe.length"
+          class="describe"
+          :text="postItem.describe"
           size="24rpx"
-          @click="handleClickPostItem(item)"
         ></u--text>
         <!-- 空 describe ，占位 -->
-        <view v-else class="post-describe"></view>
+        <view v-else class="describe"></view>
         <!-- describe end -->
-        <!-- albums -->
-        <view class="post-album" @click="handleClickPostItem(item)">
-          <u-album
-            v-if="item ? item.albums && item.albums.length : ''"
-            :urls="item.albums"
-            keyName="url"
-            singleSize="320rpx"
-            multipleSize="140rpx"
-          ></u-album>
-        </view>
 
-        <!-- 分类徽标 start -->
-        <view class="category-tag">
-          <u-badge
-            type="info"
-            max="99"
-            :value="categoryList[item.category].name"
-          ></u-badge>
-        </view>
-        <!-- 分类徽标 end -->
+        <!-- albums -->
+        <u-album
+          class="post-album"
+          v-if="postItem.albums && [].concat(postItem.albums).length"
+          :urls="postItem.albums"
+          singleSize="480rpx"
+          keyName="url"
+          multipleSize="160rpx"
+        ></u-album>
 
         <!-- actions start -->
         <view class="post-actions">
           <!-- like -->
           <view
             class="post-actions-item"
-            @click="handleClickLike(item.post_id)"
+            @click="handleClickLike(postItem.post_id)"
           >
             <uni-icons
               class="post-actions-icon"
               type="hand-up"
               size="36rpx"
             ></uni-icons>
-            <u--text
-              type="info"
-              size="20rpx"
-              :text="item ? item.like : ''"
-            ></u--text>
-          </view>
-          <!-- comments -->
-          <view class="post-actions-item" @click="handleClickComment(item)">
-            <uni-icons
-              class="post-actions-icon"
-              type="chat"
-              size="36rpx"
-            ></uni-icons>
-            <u--text
-              type="info"
-              size="20rpx"
-              :text="item ? item.comments : ''"
-            ></u--text>
+            <!-- <u--text type="info" size="20rpx" :text="postItem.like"></u--text> -->
+            <u--text type="info" size="20rpx" :text="0"></u--text>
           </view>
           <!-- share -->
           <view class="post-actions-item" @click="handleClickShare">
@@ -132,19 +104,56 @@
       </view>
       <!-- post content end -->
     </view>
-    <!-- post item end -->
+    <!-- post-item end -->
 
-    <!-- click back to top start -->
-    <u-back-top
-      :scroll-top="scrollTop"
-      top="600"
-      right="40"
-      icon="arrow-up"
-      :duration="100"
-      :iconStyle="{ fontSize: '36rpx', color: '#ffffff' }"
-      :customStyle="{ backgroundColor: '#494f5c', opacity: '0.6' }"
-    ></u-back-top>
-    <!-- click back to top end -->
+    <!-- post comments start -->
+    <view class="comment">
+      <view class="comment-title">
+        <view class="comment-title-block"></view>
+        <view class="comment-title-content">评论</view>
+      </view>
+      <uni-forms
+        ref="commentForm"
+        :model="commentForm"
+        label-position="top"
+        :label-width="320"
+        :rules="commentFormRules"
+      >
+        <!-- 发表评论内容 -->
+        <uni-forms-item name="title">
+          <view class="comment-content">
+            <uni-easyinput
+              v-model="commentForm.title"
+              :focus="commentFocus"
+              :clearable="!!commentForm.title"
+              :clearSize="20"
+              type="textarea"
+              autoHeight
+              maxlength="-1"
+              placeholder="说点什么吧"
+              @confirm="validatecommentForm('commentForm')"
+            />
+            <view class="comment-confirm">
+              <u-button type="info" plain text="发送"></u-button>
+            </view>
+          </view>
+        </uni-forms-item>
+      </uni-forms>
+
+      <u-empty
+        v-if="postItem.comment"
+        mode="data"
+        icon="http://cdn.uviewui.com/uview/empty/data.png"
+        text="暂无评论"
+      >
+      </u-empty>
+      <view v-else>
+        <view class="comment-list">
+          <view v-for="item in postItem.comment" :key="item._id"></view>
+        </view>
+      </view>
+    </view>
+    <!-- post comments end -->
   </view>
 </template>
 
@@ -154,25 +163,108 @@ import { getPostByIdApi } from "../../api/post";
 export default {
   data() {
     return {
-      // 页面的滚动距离, 通过 onPageScroll 生命周期获取, 用于回到顶部
+      commentFocus: false,
+      commentForm: {},
+      categoryList: [
+        {
+          name: "全部",
+          value: 0,
+        },
+        {
+          name: "推荐",
+          value: 1,
+        },
+        {
+          name: "电影",
+          value: 2,
+        },
+        {
+          name: "科技",
+          value: 3,
+        },
+        {
+          name: "音乐",
+          value: 4,
+        },
+        {
+          name: "美食",
+          value: 5,
+        },
+        {
+          name: "文化",
+          value: 6,
+        },
+        {
+          name: "财经",
+          value: 7,
+        },
+        {
+          name: "二手",
+          value: 8,
+        },
+      ],
       scrollTop: 0,
+      comments: [
+        {
+          id: 20,
+          comment: "testA",
+          createTime: new Date().toLocaleString(),
+          children: [
+            {
+              id: 24,
+              comment: "testB",
+              createTime: new Date().toLocaleString(),
+              children: null,
+            },
+          ],
+        },
+      ],
+      postItem: {
+        title: "致敬开源",
+        category: 3,
+        describe:
+          "Linus Benedict Torvalds 因创造了两个伟大的项目 —— Linux Kernel 和 Git 而被大家熟知。但他对开源的贡献不限于代码，在倡导开源运动和开源精神、以及运作和管理大型开源项目等方面，Linus 都做出了巨大贡献。Linus 还创造了不少为人称道的金句，最有名的莫过于 'Talk is cheap, Show me the code'。",
+        albums: [{ url: "http://192.168.1.107:9000/imgs/linux.jpg" }],
+        author: {
+          username: "Tom",
+        },
+        comment: [
+          {
+            content: "Linux is great !",
+            createTime: 1652614174409,
+            author: {
+              username: "Tom",
+              avatar: "",
+            },
+          },
+          {
+            content: "Linux is great !",
+            createTime: 1652614174409,
+            author: {
+              username: "Jerry",
+              avatar: "",
+            },
+          },
+        ],
+      },
+      commentFormRules: {},
     };
   },
 
-  onPullDownRefresh() {
-    setTimeout(() => {
-      uni.stopPullDownRefresh();
-    }, 500);
+  onReady() {
+    // 开局先获取一次帖子
+    // this.getPostById(uni.getStorageSync("detailPostId"));
+    uni.removeStorageSync("detailPostId");
   },
 
   onPageScroll(e) {
     this.scrollTop = e.scrollTop;
   },
 
-  onReady() {
-    // 开局先获取一次帖子
-    this.getPostById(uni.getStorageSync("detailPostId"));
-    uni.removeStorageSync("detailPostId");
+  onPullDownRefresh() {
+    setTimeout(() => {
+      uni.stopPullDownRefresh();
+    }, 1000);
   },
 
   methods: {
@@ -180,69 +272,83 @@ export default {
       const res = await getPostByIdApi(id).catch((e) => {});
       console.log(res);
     },
-
-    // 点赞
-    handleClickLike(post_id) {
-      console.log(post_id);
-      console.log("点赞了");
-    },
-    // 评论
-    handleClickComment(item) {
-      uni.navigateTo({
-        url: "../post-detail/index",
-      });
-    },
-    // 分享
-    handleClickShare() {
-      console.log("分享");
-    },
   },
 };
 </script>
 
 <style lang="less" scoped>
 .post-detail-page {
-  background-color: #f1f1f1;
-  .post-item {
-    margin-bottom: 20rpx;
-    padding: 40rpx 20rpx;
+  .category {
     display: flex;
-    align-items: flex-start;
-    background-color: #ffffff;
-    .post-content {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200rpx;
+    color: #ffffff;
+    background-color: #4b93d1;
+    .category-btn {
       padding: 0 20rpx;
-      width: 100%;
-      .post-describe {
-        padding: 10rpx 0;
-      }
+      border-radius: 12rpx;
+      font-weight: 600;
+      line-height: 40rpx;
+      font-size: 0.9rem;
+      color: #4b93d1;
+      background-color: #ffffff;
     }
-    .category-tag {
-      margin-top: 20rpx;
-      .u-badge.u-badge--not-dot.u-badge--info {
-        padding: 4rpx 10rpx;
-        display: initial;
-      }
-    }
-    .post-actions {
-      padding-top: 32rpx;
+  }
+  .post-item {
+    padding: 40rpx 20rpx;
+    .user-info {
       display: flex;
+      align-items: center;
       justify-content: flex-start;
-      .post-actions-item {
-        margin-right: 100rpx;
+      .username {
+        margin: 0 20rpx !important;
+      }
+    }
+    .post-content {
+      padding: 10rpx 20rpx 0 80rpx;
+      .describe {
+        padding: 10rpx 0 20rpx;
+      }
+      .post-actions {
+        padding-top: 64rpx;
         display: flex;
-        justify-content: flex-start;
-        .post-actions-icon {
-          margin-right: 8rpx;
+        justify-content: space-between;
+        .post-actions-item {
+          margin-right: 100rpx;
+          display: flex;
+          .post-actions-icon {
+            margin-right: 8rpx;
+          }
         }
       }
     }
   }
-}
-</style>
-<style lang="less">
-.index-search {
-  margin: 20rpx 0 0 !important;
-  padding: 0 12rpx !important;
-  width: 96%;
+  .comment {
+    padding: 20rpx;
+    .comment-title {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 1rem;
+      .comment-title-block {
+        margin-right: 20rpx;
+        width: 12rpx;
+        height: 32rpx;
+        border-radius: 12rpx;
+        background-color: #2979ff;
+      }
+    }
+    .comment-content {
+      display: flex !important;
+      .comment-confirm {
+        margin-left: 20rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
 }
 </style>

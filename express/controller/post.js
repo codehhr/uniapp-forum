@@ -75,7 +75,7 @@ exports.updatePost = async (req, res, next) => {
       { _id: ObjectId(req.body.updatePostId) },
       { $set: { ...req.body.post } }
     ).catch((e) => {});
-    if (acknowledged && matchedCount && modifiedCount) {
+    if (result.acknowledged && result.matchedCount && result.modifiedCount) {
       res.json({
         code: 0,
         msg: "更新成功",
@@ -115,6 +115,15 @@ exports.getPostById = async (req, res, next) => {
     res.status(200).json({
       post,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// create comment
+exports.createComment = async (req, res, next) => {
+  try {
+    console.log(req);
   } catch (err) {
     next(err);
   }
