@@ -6,6 +6,9 @@ export const registerApi = (data) => {
     url: "/user/register",
     method: "POST",
     data: { user: data },
+    headers: {
+      authentication: uni.getStorageSync("token"),
+    },
   });
 };
 
@@ -15,6 +18,9 @@ export const loginApi = (data) => {
     url: "/user/login",
     method: "POST",
     data: { user: data },
+    headers: {
+      authentication: uni.getStorageSync("token"),
+    },
   });
 };
 
@@ -23,5 +29,8 @@ export const getCurrentUserApi = () => {
   return httpRequest({
     url: "/user/self",
     method: "GET",
+    headers: {
+      authentication: uni.getStorageSync("token"),
+    },
   });
 };

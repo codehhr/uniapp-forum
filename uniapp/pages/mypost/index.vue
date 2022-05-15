@@ -28,7 +28,7 @@
     </view>
 
     <!-- post list start -->
-    <view class="post-list" v-if="postList.length">
+    <view class="post-list" v-if="[].concat(postList).length">
       <!-- 遮罩层 start -->
       <view v-if="isSearchFocus" class="post-list-mask"></view>
       <!-- 遮罩层 end -->
@@ -93,7 +93,9 @@
             v-html="item.describe"
           ></view>
           <u--text
-            v-else-if="item ? item.describe && item.describe.length : ''"
+            v-else-if="
+              item ? item.describe && [].concat(item.describe).length : ''
+            "
             class="post-describe"
             :lines="3"
             :text="item.describe"
@@ -106,14 +108,13 @@
           <!-- albums -->
           <view class="post-album" @click="handleClickPostItem(item)">
             <u-album
-              v-if="item ? item.albums && item.albums.length : ''"
+              v-if="item ? item.albums && [].concat(item.albums).length : ''"
               :urls="item.albums"
               keyName="url"
               singleSize="320rpx"
               multipleSize="140rpx"
             ></u-album>
           </view>
-
           <!-- 分类徽标 start -->
           <view class="category-tag">
             <u-badge
@@ -127,38 +128,74 @@
           <!-- actions start -->
           <view class="post-actions">
             <!-- like -->
-            <view
-              class="post-actions-item"
-              @click="handleClickLike(item.post_id)"
-            >
+            <view class="post-actions-item" @click="handleClickLike(item._id)">
               <uni-icons
                 class="post-actions-icon"
                 type="hand-up"
                 size="36rpx"
               ></uni-icons>
-              <u--text
-                type="info"
-                size="20rpx"
-                :text="item ? item.like : ''"
-              ></u--text>
+              <u-text type="info" :lines="2" :text="item.like"></u-text>
             </view>
             <!-- comments -->
-            <view class="post-actions-item" @click="handleClickComment(item)">
+            <view
+              class="post-actions-item"
+              @click="handleClickComment(item._id)"
+            >
               <uni-icons
                 class="post-actions-icon"
                 type="chat"
                 size="36rpx"
               ></uni-icons>
-              <u--text
+              <u-text
                 type="info"
-                size="20rpx"
-                :text="item ? item.comments : ''"
-              ></u--text>
+                :lines="2"
+                :text="[].concat(item.comments).length"
+              ></u-text>
             </view>
             <!-- share -->
-            <view class="post-actions-item" @click="handleClickShare">
-              <uni-icons type="redo" size="36rpx"></uni-icons>
+            <view class="post-actions-item" @click="handleClickShare(item._id)">
+              <uni-icons
+                class="post-actions-icon"
+                type="redo"
+                size="36rpx"
+              ></uni-icons>
             </view>
+            <!-- update -->
+            <view class="post-actions-item" @click="handleClickRedo(item._id)">
+              <uni-icons
+                class="post-actions-icon"
+                type="reload"
+                size="36rpx"
+              ></uni-icons>
+            </view>
+            <!-- delete -->
+            <view class="post-actions-item" @click="handleClickTrash(item)">
+              <uni-icons
+                class="post-actions-icon"
+                type="trash"
+                size="36rpx"
+              ></uni-icons>
+            </view>
+            <!-- confirm delete modal -->
+            <u-modal
+              :show="confirmModalShow"
+              :title="confirmModalTitle"
+              :buttonReverse="true"
+              :asyncClose="true"
+              :showCancelButton="true"
+              :closeOnClickOverlay="true"
+              @close="confirmModalShow = false"
+              @cancel="confirmModalShow = false"
+              @confirm="confirmDelete"
+            >
+              <view class="slot-content">
+                <u-text
+                  type="primary"
+                  :lines="2"
+                  :text="confirmModalContent"
+                ></u-text>
+              </view>
+            </u-modal>
           </view>
           <!-- actions end -->
         </view>
@@ -175,7 +212,7 @@
     <view v-else class="empty-data">
       <u-empty
         mode="data"
-        text="暂时没有人发帖"
+        text="啥也没有"
         icon="http://cdn.uviewui.com/uview/empty/data.png"
       />
     </view>
@@ -198,12 +235,20 @@
 </template>
 
 <script>
-import { getAllPostListApi } from "../../api/post";
+import {
+  getAllPostListApi,
+  deletePostByIdApi,
+  likePostApi,
+} from "../../api/post";
 const app = getApp();
 
 export default {
   data() {
     return {
+      postId: "",
+      confirmModalTitle: "确认删除",
+      confirmModalShow: false,
+      confirmModalContent: "",
       // 搜索框是否聚焦
       isSearchFocus: false,
       // 页面的滚动距离, 通过 onPageScroll 生命周期获取, 用于回到顶部
@@ -280,30 +325,31 @@ export default {
 
   methods: {
     // 获取帖子列表
-    async getAllPostList() {
+    async getAllPostList(loadMore) {
       const res = await getAllPostListApi({
         pageNum: this.pageNum,
         pageSize: this.pageSize,
         category: this.category,
         author: uni.getStorageSync("userInfo")._id,
       }).catch((e) => {});
-      console.log(res.postList);
       if (res && res.code === 0) {
-        this.$refs.indexNotify.show({
-          type: "primary",
-          color: "#ffffff",
-          bgColor: "#3c9cff",
-          message: res.msg,
-          duration: 1000,
-          fontSize: 16,
-          safeAreaInsetTop: true,
-        });
-      }
-      this.totalCount = res.totalCount;
-      if (this.pageNum == 1 || res.totalCount == 0) {
-        this.postList = res && res.postList ? res.postList : [];
-      } else {
-        this.postList = this.postList.concat(res.postList);
+        // if (loadMore != 0) {
+        //   this.$refs.indexNotify.show({
+        //     type: "primary",
+        //     color: "#ffffff",
+        //     bgColor: "#3c9cff",
+        //     message: res.msg,
+        //     duration: 1000,
+        //     fontSize: 16,
+        //     safeAreaInsetTop: true,
+        //   });
+        // }
+        this.totalCount = res.totalCount;
+        if (this.pageNum == 1 || res.totalCount == 0) {
+          this.postList = res && res.postList ? res.postList : [];
+        } else {
+          this.postList = this.postList.concat(res.postList);
+        }
       }
     },
 
@@ -314,12 +360,12 @@ export default {
         if (this.totalCount >= this.pageSize) {
           this.pageNum++;
         }
-        this.getAllPostList();
+        this.getAllPostList(0);
         if (this.pageNum * this.pageSize >= this.totalCount) {
           this.loadmoreStatus = "nomore";
         } else {
           this.pageNum++;
-          this.getAllPostList();
+          this.getAllPostList(0);
         }
       }, 500);
     },
@@ -338,21 +384,65 @@ export default {
       });
     },
 
-    // 点赞
-    handleClickLike(post_id) {
-      console.log(post_id);
-      console.log("点赞了");
+    // like
+    async handleClickLike(postId) {
+      this.postList.map((item) => {
+        if (item._id == postId) {
+          item.like++;
+        }
+      });
+      const res = await likePostApi(postId).catch((e) => {});
+      console.log(res);
     },
-    // 评论
+    // comment
     handleClickComment(item) {
       app.globalData.currentPostItem = item;
       uni.navigateTo({
         url: "../post-detail/index",
       });
     },
-    // 分享
+    // share
     handleClickShare() {
       console.log("分享");
+    },
+
+    // update
+    handleClickRedo(id) {
+      uni.setStorageSync("updatePostId", id);
+      uni.switchTab({
+        url: "../post/index",
+      });
+    },
+
+    // delete
+    handleClickTrash(item) {
+      this.confirmModalShow = true;
+      this.confirmModalContent = item.title;
+      this.postId = item._id;
+    },
+
+    // confirm delete
+    async confirmDelete() {
+      // this.postId
+      const res = await deletePostByIdApi({ postId: this.postId }).catch(
+        (e) => {}
+      );
+      if (res && res.code == 0) {
+        this.confirmModalShow = false;
+        let that = this;
+        this.$refs.indexNotify.show({
+          type: "primary",
+          color: "#ffffff",
+          bgColor: "#3c9cff",
+          message: res && res.msg ? res.msg : "删除成功",
+          duration: 500,
+          fontSize: 16,
+          safeAreaInsetTop: true,
+          complete() {
+            that.getAllPostList();
+          },
+        });
+      }
     },
 
     // 搜索
@@ -411,16 +501,12 @@ export default {
         }
       }
       .post-actions {
-        padding-top: 32rpx;
+        margin-top: 32rpx;
         display: flex;
         justify-content: flex-start;
         .post-actions-item {
-          margin-right: 100rpx;
+          margin-right: 96rpx;
           display: flex;
-          justify-content: flex-start;
-          .post-actions-icon {
-            margin-right: 8rpx;
-          }
         }
       }
     }

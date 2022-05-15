@@ -70,7 +70,7 @@
             "
             type="info"
             size="20rpx"
-            @click="handleClickPostItem(item)"
+            @click="handleClickPostItem(item._id)"
           ></u--text>
           <!-- title -->
           <u--text
@@ -79,7 +79,7 @@
             :text="item && item.title ? item.title : ''"
             size="32rpx"
             margin="20rpx 0 0"
-            @click="handleClickPostItem(item)"
+            @click="handleClickPostItem(item._id)"
           ></u--text>
           <!-- describe start -->
           <view
@@ -98,13 +98,13 @@
             :lines="3"
             :text="item.describe"
             size="24rpx"
-            @click="handleClickPostItem(item)"
+            @click="handleClickPostItem(item._id)"
           ></u--text>
           <!-- 空 describe ，占位 -->
           <view v-else class="post-describe"></view>
           <!-- describe end -->
           <!-- albums -->
-          <view class="post-album" @click="handleClickPostItem(item)">
+          <view class="post-album" @click="handleClickPostItem(item._id)">
             <u-album
               v-if="item ? item.albums && item.albums.length : ''"
               :urls="item.albums"
@@ -175,7 +175,7 @@
     <view v-else class="empty-data">
       <u-empty
         mode="data"
-        text="暂时没有人发帖"
+        text="啥也没有"
         icon="http://cdn.uviewui.com/uview/empty/data.png"
       />
     </view>
@@ -279,23 +279,25 @@ export default {
 
   methods: {
     // 获取帖子列表
-    async getAllPostList() {
+    async getAllPostList(loadMore) {
       const res = await getAllPostListApi({
         pageNum: this.pageNum,
         pageSize: this.pageSize,
         category: this.category,
+        keywords: this.keywords,
       }).catch((e) => {});
-      console.log(res.postList);
       if (res && res.code === 0) {
-        this.$refs.indexNotify.show({
-          type: "primary",
-          color: "#ffffff",
-          bgColor: "#3c9cff",
-          message: res.msg,
-          duration: 1000,
-          fontSize: 16,
-          safeAreaInsetTop: true,
-        });
+        if (loadMore != 0) {
+          this.$refs.indexNotify.show({
+            type: "primary",
+            color: "#ffffff",
+            bgColor: "#3c9cff",
+            message: res.msg,
+            duration: 1000,
+            fontSize: 16,
+            safeAreaInsetTop: true,
+          });
+        }
       }
       this.totalCount = res.totalCount;
       if (this.pageNum == 1 || res.totalCount == 0) {
@@ -312,12 +314,12 @@ export default {
         if (this.totalCount >= this.pageSize) {
           this.pageNum++;
         }
-        this.getAllPostList();
+        this.getAllPostList(0);
         if (this.pageNum * this.pageSize >= this.totalCount) {
           this.loadmoreStatus = "nomore";
         } else {
           this.pageNum++;
-          this.getAllPostList();
+          this.getAllPostList(0);
         }
       }, 500);
     },
@@ -329,7 +331,8 @@ export default {
     },
 
     // 点击帖子
-    handleClickPostItem(item) {
+    handleClickPostItem(detailPostId) {
+      uni.setStorageSync("detailPostId", detailPostId);
       uni.navigateTo({
         url: "../post-detail/index",
       });
@@ -354,7 +357,7 @@ export default {
     // 搜索
     handleSearch() {
       this.isSearchFocus = false;
-      console.log(this.keywords);
+      this.getAllPostList();
     },
 
     // 搜索框聚焦时

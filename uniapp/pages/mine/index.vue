@@ -31,7 +31,6 @@
 
 <script>
 import { getCurrentUserApi } from "../../api/user";
-const app = getApp();
 
 export default {
   data() {
@@ -66,7 +65,6 @@ export default {
           });
         }
         this.userInfo = res && res.userInfo ? res.userInfo : {};
-        // app.globalData.userInfo = res && res.userInfo ? res.userInfo : {};
         uni.setStorageSync("userInfo", res && res.userInfo ? res.userInfo : {});
       } else if (!res || (res && res.code === 401)) {
         // !==0 : 首次加载不弹出提示

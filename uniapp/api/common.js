@@ -5,5 +5,8 @@ export const authenticateApi = (url) => {
   return httpRequest({
     url,
     method: "POST",
+    headers: {
+      authentication: uni.getStorageSync("token"),
+    },
   });
 };

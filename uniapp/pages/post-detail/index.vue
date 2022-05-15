@@ -1,92 +1,117 @@
 <template>
   <view class="post-detail-page">
-    <!-- category start -->
-    <view class="category">
-      <button class="category-btn">{{ postItem.category }}</button>
-      <!-- title -->
-      <view class="title">
-        <u--text
-          v-if="postItem.title"
-          :lines="1"
-          :text="postItem.title"
-          margin="20rpx 0 10rpx"
-          color="#ffffff"
-          size="28rpx"
-        ></u--text>
-      </view>
-    </view>
-    <!-- categories end -->
+    <!-- post list start -->
 
-    <!-- post-item start -->
-    <view class="post-item">
-      <!-- user info start -->
-      <view class="user-info">
-        <!-- avatar -->
-        <u-avatar
-          class="post-item-avatar"
-          icon="account"
-          mpde="widthFix"
-          randomBgColor
-          fontSize="40rpx"
-        ></u-avatar>
-        <u--text
-          class="username"
-          :lines="1"
-          :text="postItem.user_name"
-          bold
-          size="16"
-        ></u--text>
-      </view>
-      <!-- user info end -->
-
+    <!-- post item start -->
+    <view class="post-item" v-for="(item, index) in postList" :key="index">
+      <!-- avatar -->
+      <u-avatar
+        class="post-item-avatar"
+        :src="
+          item && item.author && item.author.avatar ? item.author.avatar : ''
+        "
+        mpde="widthFix"
+        randomBgColor
+        fontSize="40rpx"
+      ></u-avatar>
       <!-- post content start -->
       <view class="post-content">
+        <!-- username -->
+        <u--text
+          class="post-username"
+          :lines="1"
+          :text="
+            item && item.author && item.author.username
+              ? item.author.username
+              : 'unknown'
+          "
+          bold
+          size="32rpx"
+        ></u--text>
+        <!-- updateTime -->
+        <u--text
+          class="post-updateTime"
+          :lines="1"
+          :text="
+            item && item.updateTime
+              ? new Date(item.updateTime).toLocaleString()
+              : ''
+          "
+          type="info"
+          size="20rpx"
+          @click="handleClickPostItem(item)"
+        ></u--text>
+        <!-- title -->
+        <u--text
+          class="post-title"
+          :lines="1"
+          :text="item && item.title ? item.title : ''"
+          size="32rpx"
+          margin="20rpx 0 0"
+          @click="handleClickPostItem(item)"
+        ></u--text>
         <!-- describe start -->
         <view
-          class="describe"
+          class="post-describe"
           v-if="
-            postItem.describe &&
-            /<(\w+)[^>]*>(.*?<\/\1>)?/.test(postItem.describe)
+            item
+              ? item.describe && /<(\w+)[^>]*>(.*?<\/\1>)?/.test(item.describe)
+              : ''
           "
-          v-html="postItem.describe"
+          v-html="item.describe"
         ></view>
         <u--text
-          v-else-if="postItem.describe && postItem.describe.length"
-          class="describe"
+          v-else-if="item ? item.describe && item.describe.length : ''"
+          class="post-describe"
           :lines="3"
-          :text="postItem.describe"
+          :text="item.describe"
           size="24rpx"
+          @click="handleClickPostItem(item)"
         ></u--text>
         <!-- 空 describe ，占位 -->
-        <view v-else class="describe"></view>
+        <view v-else class="post-describe"></view>
         <!-- describe end -->
-
         <!-- albums -->
-        <u-album
-          class="post-album"
-          v-if="postItem.albums && postItem.albums.length"
-          :urls="postItem.albums"
-          singleSize="480rpx"
-          keyName="cover"
-          multipleSize="160rpx"
-        ></u-album>
+        <view class="post-album" @click="handleClickPostItem(item)">
+          <u-album
+            v-if="item ? item.albums && item.albums.length : ''"
+            :urls="item.albums"
+            keyName="url"
+            singleSize="320rpx"
+            multipleSize="140rpx"
+          ></u-album>
+        </view>
+
+        <!-- 分类徽标 start -->
+        <view class="category-tag">
+          <u-badge
+            type="info"
+            max="99"
+            :value="categoryList[item.category].name"
+          ></u-badge>
+        </view>
+        <!-- 分类徽标 end -->
 
         <!-- actions start -->
         <view class="post-actions">
           <!-- like -->
           <view
             class="post-actions-item"
-            @click="handleClickLike(postItem.post_id)"
+            @click="handleClickLike(item.post_id)"
           >
             <uni-icons
               class="post-actions-icon"
               type="hand-up"
               size="36rpx"
             ></uni-icons>
-            <u--text type="info" size="20rpx" :text="postItem.like"></u--text>
+            <u--text
+              type="info"
+              size="20rpx"
+              :text="item ? item.like : ''"
+            ></u--text>
           </view>
           <!-- comments -->
-          <view class="post-actions-item" @click="handleClickComment(postItem)">
+          <view class="post-actions-item" @click="handleClickComment(item)">
             <uni-icons
               class="post-actions-icon"
               type="chat"
@@ -95,7 +120,7 @@
             <u--text
               type="info"
               size="20rpx"
-              :text="postItem.comments"
+              :text="item ? item.comments : ''"
             ></u--text>
           </view>
           <!-- share -->
@@ -107,106 +132,117 @@
       </view>
       <!-- post content end -->
     </view>
-    <!-- post-item end -->
+    <!-- post item end -->
 
-    <!-- post comments start -->
-    <u-empty
-      v-if="!postItem.comments"
-      mode="data"
-      icon="http://cdn.uviewui.com/uview/empty/data.png"
-      text="暂无评论"
-    >
-    </u-empty>
-    <!-- post comments end -->
+    <!-- click back to top start -->
+    <u-back-top
+      :scroll-top="scrollTop"
+      top="600"
+      right="40"
+      icon="arrow-up"
+      :duration="100"
+      :iconStyle="{ fontSize: '36rpx', color: '#ffffff' }"
+      :customStyle="{ backgroundColor: '#494f5c', opacity: '0.6' }"
+    ></u-back-top>
+    <!-- click back to top end -->
   </view>
 </template>
 
 <script>
-const app = getApp();
+import { getPostByIdApi } from "../../api/post";
 
 export default {
   data() {
     return {
-      postItem: {},
-      comments: [
-        {
-          id: 20,
-          comment: "testA",
-          createTime: new Date().toLocaleString(),
-          children: [
-            {
-              id: 24,
-              comment: "testB",
-              createTime: new Date().toLocaleString(),
-              children: null,
-            },
-          ],
-        },
-      ],
+      // 页面的滚动距离, 通过 onPageScroll 生命周期获取, 用于回到顶部
+      scrollTop: 0,
     };
   },
-  onLoad() {
-    this.postItem = app.globalData.currentPostItem;
-  },
-  onReady() {
-    // console.log(this.postItem);
-  },
+
   onPullDownRefresh() {
     setTimeout(() => {
       uni.stopPullDownRefresh();
-    }, 1000);
+    }, 500);
+  },
+
+  onPageScroll(e) {
+    this.scrollTop = e.scrollTop;
+  },
+
+  onReady() {
+    // 开局先获取一次帖子
+    this.getPostById(uni.getStorageSync("detailPostId"));
+    uni.removeStorageSync("detailPostId");
+  },
+
+  methods: {
+    async getPostById(id) {
+      const res = await getPostByIdApi(id).catch((e) => {});
+      console.log(res);
+    },
+
+    // 点赞
+    handleClickLike(post_id) {
+      console.log(post_id);
+      console.log("点赞了");
+    },
+    // 评论
+    handleClickComment(item) {
+      uni.navigateTo({
+        url: "../post-detail/index",
+      });
+    },
+    // 分享
+    handleClickShare() {
+      console.log("分享");
+    },
   },
 };
 </script>
 
 <style lang="less" scoped>
 .post-detail-page {
-  .category {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 200rpx;
-    background-color: #4b93d1;
-    color: #ffffff;
-    .category-btn {
-      padding: 0 20rpx;
-      border-radius: 12rpx;
-      font-weight: 600;
-      line-height: 40rpx;
-      font-size: 0.9rem;
-      color: #4b93d1;
-      background-color: #ffffff;
-    }
-  }
+  background-color: #f1f1f1;
   .post-item {
-    padding: 20rpx;
-    .user-info {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      .username {
-        margin: 0 20rpx !important;
+    margin-bottom: 20rpx;
+    padding: 40rpx 20rpx;
+    display: flex;
+    align-items: flex-start;
+    background-color: #ffffff;
+    .post-content {
+      padding: 0 20rpx;
+      width: 100%;
+      .post-describe {
+        padding: 10rpx 0;
       }
     }
-    .post-content {
-      padding: 10rpx 20rpx 0 80rpx;
-      .describe {
-        padding: 10rpx 0 20rpx;
+    .category-tag {
+      margin-top: 20rpx;
+      .u-badge.u-badge--not-dot.u-badge--info {
+        padding: 4rpx 10rpx;
+        display: initial;
       }
-      .post-actions {
-        padding-top: 64rpx;
+    }
+    .post-actions {
+      padding-top: 32rpx;
+      display: flex;
+      justify-content: flex-start;
+      .post-actions-item {
+        margin-right: 100rpx;
         display: flex;
         justify-content: flex-start;
-        .post-actions-item {
-          margin-right: 100rpx;
-          display: flex;
-          .post-actions-icon {
-            margin-right: 8rpx;
-          }
+        .post-actions-icon {
+          margin-right: 8rpx;
         }
       }
     }
   }
+}
+</style>
+<style lang="less">
+.index-search {
+  margin: 20rpx 0 0 !important;
+  padding: 0 12rpx !important;
+  width: 96%;
 }
 </style>

@@ -26,7 +26,27 @@ router.post(
   postController.createPost
 );
 
+// 更新帖
+router.post(
+  "/update",
+  auth,
+  postValidator.updatePost,
+  postController.updatePost
+);
+
+// 删帖
+router.post(
+  "/delete",
+  auth,
+  // postValidator.isValidObjectId,
+  postController.deletePostById
+);
+
 // 获取帖子
-router.get("/:postId", postValidator.getPostById, postController.getPostById);
+router.get(
+  "/:postId",
+  // postValidator.isValidObjectId,
+  postController.getPostById
+);
 
 module.exports = router;

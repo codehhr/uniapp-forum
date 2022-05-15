@@ -8,14 +8,17 @@ exports.createPost = validate([
   body("post.describe").notEmpty().withMessage("发表内容不能为空"),
 ]);
 
-// 获取帖子
-exports.getPostById = validate([
-  param("postId").custom(async (value) => {
-    if (!mongoose.isValidObjectId(value)) {
-      return Promise.reject("文章ID类型错误");
-    }
-  }),
+// 更新
+exports.updatePost = validate([
+  body("post.title").notEmpty().withMessage("标题不能为空"),
+  body("post.describe").notEmpty().withMessage("发表内容不能为空"),
 ]);
 
-// 上传图片
-// exports.uploadImg = uploadImg([]);
+// 验证 ObjectId
+exports.isValidObjectId = (location, fields) => {
+  return buildCheckFunction(location)(fields).custom(async (value) => {
+    if (!isValidObjectId(value)) {
+      return Promise.reject("ID 不是一个有效的 ObjectID");
+    }
+  });
+};

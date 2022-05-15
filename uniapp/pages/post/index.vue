@@ -124,7 +124,12 @@
 
       <!-- 发布-->
       <view class="post-submit">
-        <u-button type="primary" @click="authenticate">发布</u-button>
+        <view v-if="!updatePostId">
+          <u-button type="primary" @click="authenticate">发布</u-button>
+        </view>
+        <view v-else>
+          <u-button type="primary" plain @click="authenticate">更新</u-button>
+        </view>
       </view>
     </uni-forms>
 
@@ -162,13 +167,15 @@
 </template>
 
 <script>
-import { createPostApi } from "../../api/post";
+import { createPostApi, getPostByIdApi, updatePostApi } from "../../api/post";
 import { authenticateApi } from "../../api/common";
 import { BASE_URL } from "../../config/config.default";
 
 export default {
   data() {
     return {
+      updatePostId: "",
+      postItem: {},
       postLoading: false,
       uploadImgCount: 0,
       albums: [],
@@ -246,7 +253,31 @@ export default {
     this.scrollTop = e.scrollTop;
   },
 
+  onShow() {
+    this.updatePostId = uni.getStorageSync("updatePostId");
+    uni.removeStorageSync("updatePostId");
+    if (this.updatePostId) {
+      this.getPostById(this.updatePostId);
+    }
+  },
+
   methods: {
+    async getPostById(id) {
+      const res = await getPostByIdApi(id).catch((e) => {});
+      this.initPost();
+      this.postForm.title = res.post.title;
+      this.postForm.category = res.post.category;
+      this.postForm.describe = res.post.describe;
+      res.post.albums.map((url) => {
+        // if (url.split("http://127.0.0.1")) {
+        this.albums.push(url);
+        this.unUploadImglists.push(url);
+        // } else {
+        // this.urls.push(url);
+        // }
+      });
+    },
+
     // 身份验证
     async authenticate() {
       const res = await authenticateApi("/post/create").catch((e) => {});
@@ -337,6 +368,31 @@ export default {
       }
     },
 
+    // update
+    async updatePost() {
+      const res = await updatePostApi({
+        updatePostId: this.updatePostId,
+        post: this.postForm,
+      }).catch((e) => {});
+      if (res && res.code == 0) {
+        this.initPost();
+        this.$refs.postNotify.show({
+          type: "primary",
+          color: "#ffffff",
+          bgColor: "#3c9cff",
+          message: res.msg,
+          duration: 1000,
+          fontSize: 16,
+          safeAreaInsetTop: true,
+          complete() {
+            uni.navigateTo({
+              url: "../mypost/index",
+            });
+          },
+        });
+      }
+    },
+
     // 初始化
     initPost() {
       this.postLoading = false;
@@ -359,7 +415,11 @@ export default {
         this.postForm.albums.push({ url: item.url });
       });
       this.albums = [];
-      this.createPost();
+      if (this.updatePostId) {
+        this.updatePost();
+      } else {
+        this.createPost();
+      }
     },
 
     // 选择分类
@@ -369,7 +429,6 @@ export default {
 
     // 移除图片
     removePic(event) {
-      console.log(event);
       this.albums.splice(event.index, 1);
       this.unUploadImglists.splice(event.index, 1);
     },
