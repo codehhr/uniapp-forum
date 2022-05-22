@@ -224,7 +224,10 @@ export default {
         category: 3,
         describe:
           "Linus Benedict Torvalds 因创造了两个伟大的项目 —— Linux Kernel 和 Git 而被大家熟知。但他对开源的贡献不限于代码，在倡导开源运动和开源精神、以及运作和管理大型开源项目等方面，Linus 都做出了巨大贡献。Linus 还创造了不少为人称道的金句，最有名的莫过于 'Talk is cheap, Show me the code'。",
-        albums: [{ url: "http://192.168.1.107:9000/imgs/linux.jpg" }],
+        albums: [
+          { url: "http://192.168.1.107:9000/imgs/linux.jpg" },
+          { url: "http://192.168.1.107:9000/imgs/tusiji.png" },
+        ],
         author: {
           username: "Tom",
         },

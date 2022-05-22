@@ -330,20 +330,21 @@ export default {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
         category: this.category,
+        keywords: this.keywords,
         author: uni.getStorageSync("userInfo")._id,
       }).catch((e) => {});
       if (res && res.code === 0) {
-        // if (loadMore != 0) {
-        //   this.$refs.indexNotify.show({
-        //     type: "primary",
-        //     color: "#ffffff",
-        //     bgColor: "#3c9cff",
-        //     message: res.msg,
-        //     duration: 1000,
-        //     fontSize: 16,
-        //     safeAreaInsetTop: true,
-        //   });
-        // }
+        if (loadMore != 0) {
+          this.$refs.indexNotify.show({
+            type: "primary",
+            color: "#ffffff",
+            bgColor: "#3c9cff",
+            message: res.msg,
+            duration: 1000,
+            fontSize: 16,
+            safeAreaInsetTop: true,
+          });
+        }
         this.totalCount = res.totalCount;
         if (this.pageNum == 1 || res.totalCount == 0) {
           this.postList = res && res.postList ? res.postList : [];

@@ -285,6 +285,7 @@ export default {
         pageSize: this.pageSize,
         category: this.category,
         keywords: this.keywords,
+        author: 0,
       }).catch((e) => {});
       if (res && res.code === 0) {
         if (loadMore != 0) {

@@ -1,5 +1,6 @@
 const multer = require("multer");
 const fs = require("fs");
+const { host } = require("../config/config.default");
 
 // 存储图片
 exports.uploadImgStorage = multer({ dest: "static/imgs" }).single("img");
@@ -12,7 +13,7 @@ exports.getImgUrl = (req, res, next) => {
     res.json({
       code: 0,
       msg: "图片上传成功",
-      url: `http://192.168.1.107:9000/imgs/${originalname}`,
+      url: `${host}/imgs/${originalname}`,
     });
   } catch (err) {
     next(err);

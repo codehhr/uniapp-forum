@@ -4,48 +4,40 @@ const ObjectId = require("bson").ObjectId;
 // get postList
 exports.getPostList = async (req, res, next) => {
   try {
-    let { pageSize = 10, pageNum = 1, category = 0, keywords = "" } = req.query;
-    let queryParams = {};
-    for (let key in req.query) {
-      if (req.query[key]) {
-        if (
-          key != "pageSize" &&
-          key != "pageNum" &&
-          key != "keywords" &&
-          key != "category"
-        ) {
-          queryParams[key] = req.query[key];
-        }
-      }
-    }
-    let postList = await Post.find({
-      ...queryParams,
-      $or: [
-        keywords ? { title: eval(`/${keywords}/`) } : {},
-        keywords ? { describe: eval(`/${keywords}/`) } : {},
-        category ? { category } : {},
+    let {
+      pageSize = 10,
+      pageNum = 1,
+      category = 0,
+      author = 0,
+      keywords = "",
+    } = req.query;
+
+    let queryParams = {
+      $and: [
+        keywords
+          ? {
+              $or: [
+                { title: eval(`/${keywords}/`) },
+                { describe: eval(`/${keywords}/`) },
+              ],
+            }
+          : {},
+        author != 0 ? { author: ObjectId(author) } : {},
+        category != 0 ? { category } : {},
       ],
-    })
-      .sort({ updateTime: -1, createTime: -1 })
+    };
+    let postList = await Post.find(queryParams)
+      .sort({ updateTime: -1, createTime: 1 })
       .skip((pageNum - 1) * pageSize)
       .limit(pageNum * pageSize)
       .populate("author");
-    let totalCount = await Post.find({}).countDocuments();
-    if (!postList.length) {
-      res.json({
-        code: 0,
-        msg: "啥也没有",
-        postList,
-        totalCount,
-      });
-    } else {
-      res.json({
-        code: 0,
-        msg: "获取成功",
-        postList,
-        totalCount,
-      });
-    }
+    let totalCount = await Post.find(queryParams).countDocuments();
+    res.json({
+      code: 0,
+      msg: "获取成功",
+      postList,
+      totalCount,
+    });
   } catch (err) {
     next(err);
   }

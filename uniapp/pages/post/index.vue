@@ -127,8 +127,17 @@
         <view v-if="!updatePostId">
           <u-button type="primary" @click="authenticate">发布</u-button>
         </view>
-        <view v-else>
-          <u-button type="primary" plain @click="authenticate">更新</u-button>
+        <view class="post-update" v-else>
+          <u-button class="post-update-btn" type="primary" @click="authenticate"
+            >更新</u-button
+          >
+          <u-button
+            class="post-update-btn"
+            type="primary"
+            plain
+            @click="updateCancel"
+            >取消</u-button
+          >
         </view>
       </view>
     </uni-forms>
@@ -254,9 +263,10 @@ export default {
   },
 
   onShow() {
-    this.updatePostId = uni.getStorageSync("updatePostId");
-    uni.removeStorageSync("updatePostId");
-    if (this.updatePostId) {
+    let newUpdatePostId = uni.getStorageSync("updatePostId");
+    if (newUpdatePostId) {
+      this.updateCancel();
+      this.updatePostId = newUpdatePostId;
       this.getPostById(this.updatePostId);
     }
   },
@@ -264,7 +274,7 @@ export default {
   methods: {
     async getPostById(id) {
       const res = await getPostByIdApi(id).catch((e) => {});
-      this.initPost();
+      this.postItem = res.post;
       this.postForm.title = res.post.title;
       this.postForm.category = res.post.category;
       this.postForm.describe = res.post.describe;
@@ -393,8 +403,15 @@ export default {
       }
     },
 
+    // 取消更新
+    updateCancel() {
+      uni.removeStorageSync("updatePostId");
+      this.initPost();
+    },
+
     // 初始化
     initPost() {
+      this.updatePostId = "";
       this.postLoading = false;
       this.albumsLength = 0;
       this.unUploadImglists = [];
@@ -548,6 +565,13 @@ export default {
   .post-submit {
     position: sticky;
     bottom: 88rpx;
+    .post-update {
+      display: flex;
+      justify-content: space-around;
+      .post-update-btn {
+        margin: 0 20rpx;
+      }
+    }
   }
 
   .loading-content-wrap {

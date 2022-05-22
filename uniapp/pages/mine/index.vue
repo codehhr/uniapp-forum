@@ -38,7 +38,7 @@ export default {
       userInfo: {},
     };
   },
-  onReady() {
+  onShow() {
     this.getCurrentUser(0);
   },
 
@@ -48,12 +48,12 @@ export default {
 
   methods: {
     // 获取当前登录用户
-    async getCurrentUser(onReady) {
+    async getCurrentUser(onShow) {
       let that = this;
       const res = await getCurrentUserApi().catch((e) => {});
       if (res && res.code === 0) {
-        // !==0 : 首次加载不弹出提示
-        if (onReady !== 0) {
+        // !==0 : onShow时不弹出提示
+        if (onShow != 0) {
           this.$refs.mineNotify.show({
             type: "primary",
             color: "#ffffff",
@@ -64,8 +64,6 @@ export default {
             safeAreaInsetTop: true,
           });
         }
-        this.userInfo = res && res.userInfo ? res.userInfo : {};
-        uni.setStorageSync("userInfo", res && res.userInfo ? res.userInfo : {});
       } else if (!res || (res && res.code === 401)) {
         // !==0 : 首次加载不弹出提示
         if (onReady !== 0) {
@@ -80,6 +78,8 @@ export default {
           });
         }
       }
+      this.userInfo = res && res.userInfo ? res.userInfo : {};
+      uni.setStorageSync("userInfo", res && res.userInfo ? res.userInfo : {});
       uni.stopPullDownRefresh();
     },
 
