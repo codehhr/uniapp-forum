@@ -9,11 +9,21 @@ exports.uploadImgStorage = multer({ dest: "static/imgs" }).single("img");
 exports.getImgUrl = (req, res, next) => {
   try {
     let { filename, originalname } = req.file;
-    fs.renameSync(`./static/imgs/${filename}`, `./static/imgs/${originalname}`);
+    let newFileTime = new Date()
+      .toLocaleString()
+      .split(" ")[0]
+      .split("/")
+      .join("_");
+    let newFileExt =
+      originalname.split(".")[originalname.split(".").length - 1];
+    let newFilename = `${newFileTime}_${originalname
+      .split(".")
+      .join("_")}.${newFileExt}`;
+    fs.renameSync(`./static/imgs/${filename}`, `./static/imgs/${newFilename}`);
     res.json({
       code: 0,
       msg: "图片上传成功",
-      url: `${host}/imgs/${originalname}`,
+      url: `${host}/imgs/${newFilename}`,
     });
   } catch (err) {
     next(err);

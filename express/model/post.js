@@ -24,6 +24,10 @@ const postSchema = new Schema({
     type: Number,
     default: 0,
   },
+  comments: {
+    type: Number,
+    default: 0,
+  },
   author: {
     type: Schema.Types.ObjectId,
     ref: "User",

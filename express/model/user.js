@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: "https://cdn.uviewui.com/uview/album/1.jpg",
+    default: "",
   },
   intro: {
     type: String,

@@ -38,18 +38,27 @@ router.post(
 router.post(
   "/delete",
   auth,
-  // postValidator.isValidObjectId,
+  postValidator.deletePost,
   postController.deletePostById
 );
 
-// 获取帖子
-router.get(
-  "/:postId",
-  // postValidator.isValidObjectId,
-  postController.getPostById
-);
+// 根据 id 获取帖子
+router.get("/:postId", postController.getPostById);
 
 // 发布评论
-router.post("/comment", auth, postController.createComment);
+router.post(
+  "/:postId/comment",
+  auth,
+  postValidator.commentPost,
+  postController.createComment
+);
+
+// 根据帖子获取评论
+router.get(
+  "/:postId/comments",
+  auth,
+  postValidator.getCommentsByPostId,
+  postController.getCommentsByPostId
+);
 
 module.exports = router;

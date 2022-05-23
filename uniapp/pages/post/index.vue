@@ -274,18 +274,18 @@ export default {
   methods: {
     async getPostById(id) {
       const res = await getPostByIdApi(id).catch((e) => {});
-      this.postItem = res.post;
+      this.initPost();
+      // this.postItem = res.post;
+      this.updatePostId = id;
       this.postForm.title = res.post.title;
       this.postForm.category = res.post.category;
       this.postForm.describe = res.post.describe;
-      res.post.albums.map((url) => {
-        // if (url.split("http://127.0.0.1")) {
-        this.albums.push(url);
-        this.unUploadImglists.push(url);
-        // } else {
-        // this.urls.push(url);
-        // }
-      });
+      if (res.post.albums.length) {
+        res.post.albums.map((url) => {
+          this.albums.push(url);
+          this.unUploadImglists.push(url);
+        });
+      }
     },
 
     // 身份验证

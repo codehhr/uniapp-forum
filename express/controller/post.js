@@ -1,4 +1,4 @@
-const { Post } = require("../model/index");
+const { Post, Comment } = require("../model/index");
 const ObjectId = require("bson").ObjectId;
 
 // get postList
@@ -27,7 +27,7 @@ exports.getPostList = async (req, res, next) => {
       ],
     };
     let postList = await Post.find(queryParams)
-      .sort({ updateTime: -1, createTime: 1 })
+      .sort({ createTime: -1, updateTime: -1 })
       .skip((pageNum - 1) * pageSize)
       .limit(pageNum * pageSize)
       .populate("author");
@@ -65,7 +65,7 @@ exports.updatePost = async (req, res, next) => {
   try {
     const result = await Post.updateOne(
       { _id: ObjectId(req.body.updatePostId) },
-      { $set: { ...req.body.post } }
+      { $set: { updateTime: Date.now(), ...req.body.post } }
     ).catch((e) => {});
     if (result.acknowledged && result.matchedCount && result.modifiedCount) {
       res.json({
@@ -105,6 +105,7 @@ exports.getPostById = async (req, res, next) => {
       return res.status(404).end();
     }
     res.status(200).json({
+      code: 0,
       post,
     });
   } catch (err) {
@@ -115,7 +116,51 @@ exports.getPostById = async (req, res, next) => {
 // create comment
 exports.createComment = async (req, res, next) => {
   try {
-    console.log(req);
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      res.status(404).json({
+        code: -1,
+        msg: "ID错误",
+      });
+    } else {
+      const comment = new Comment(req.body.comment);
+      comment.author = req.user._id;
+      comment.postItem = req.params.postId;
+      comment.populate("author");
+      comment.populate("postItem");
+      await comment.save();
+      res.json({
+        code: 0,
+        comment,
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+// get comments by postId
+exports.getCommentsByPostId = async (req, res, next) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      res.status(404).json({
+        code: -1,
+        msg: "ID错误",
+      });
+    } else {
+      const comments = await Comment.find({
+        postItem: ObjectId(req.params.postId),
+      }).populate("author");
+      await Post.updateOne(
+        { _id: ObjectId(req.params.postId) },
+        { $set: { comments: comments.length } }
+      ).catch((e) => {});
+      res.json({
+        code: 0,
+        comments,
+      });
+    }
   } catch (err) {
     next(err);
   }

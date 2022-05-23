@@ -64,3 +64,26 @@ export const likePostApi = (data) => {
     },
   });
 };
+
+// 发表评论
+export const commentPostApi = ({ postId, data }) => {
+  return httpRequest({
+    url: `/post/${postId}/comment`,
+    method: "POST",
+    data: { comment: data },
+    headers: {
+      authentication: uni.getStorageSync("token"),
+    },
+  });
+};
+
+// 获取评论 by postId
+export const getCommentsByPostIdApi = (postId) => {
+  return httpRequest({
+    url: `/post/${postId}/comments`,
+    method: "GET",
+    headers: {
+      authentication: uni.getStorageSync("token"),
+    },
+  });
+};

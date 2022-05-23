@@ -127,10 +127,7 @@
           <!-- actions start -->
           <view class="post-actions">
             <!-- like -->
-            <view
-              class="post-actions-item"
-              @click="handleClickLike(item.post_id)"
-            >
+            <view class="post-actions-item" @click="handleClickLike(item._id)">
               <uni-icons
                 class="post-actions-icon"
                 type="hand-up"
@@ -139,11 +136,14 @@
               <u--text
                 type="info"
                 size="20rpx"
-                :text="item ? item.like : ''"
+                :text="item && item.like ? item.like : 0"
               ></u--text>
             </view>
             <!-- comments -->
-            <view class="post-actions-item" @click="handleClickComment(item)">
+            <view
+              class="post-actions-item"
+              @click="handleClickComment(item._id)"
+            >
               <uni-icons
                 class="post-actions-icon"
                 type="chat"
@@ -152,7 +152,7 @@
               <u--text
                 type="info"
                 size="20rpx"
-                :text="item ? item.comments : ''"
+                :text="item && item.comments ? item.comments : 0"
               ></u--text>
             </view>
             <!-- share -->
@@ -263,7 +263,7 @@ export default {
 
   onPullDownRefresh() {
     setTimeout(() => {
-      this.getAllPostList();
+      this.getAllPostList(1);
       uni.stopPullDownRefresh();
     }, 500);
   },
@@ -279,7 +279,7 @@ export default {
 
   methods: {
     // 获取帖子列表
-    async getAllPostList(loadMore) {
+    async getAllPostList(onPullDownRefresh) {
       const res = await getAllPostListApi({
         pageNum: this.pageNum,
         pageSize: this.pageSize,
@@ -288,17 +288,17 @@ export default {
         author: 0,
       }).catch((e) => {});
       if (res && res.code === 0) {
-        if (loadMore != 0) {
-          this.$refs.indexNotify.show({
-            type: "primary",
-            color: "#ffffff",
-            bgColor: "#3c9cff",
-            message: res.msg,
-            duration: 1000,
-            fontSize: 16,
-            safeAreaInsetTop: true,
-          });
-        }
+        // if (onPullDownRefresh == 1) {
+        this.$refs.indexNotify.show({
+          type: "primary",
+          color: "#ffffff",
+          bgColor: "#3c9cff",
+          message: res.msg,
+          duration: 800,
+          fontSize: 16,
+          safeAreaInsetTop: true,
+        });
+        // }
       }
       this.totalCount = res.totalCount;
       if (this.pageNum == 1 || res.totalCount == 0) {
@@ -315,12 +315,12 @@ export default {
         if (this.totalCount >= this.pageSize) {
           this.pageNum++;
         }
-        this.getAllPostList(0);
+        this.getAllPostList();
         if (this.pageNum * this.pageSize >= this.totalCount) {
           this.loadmoreStatus = "nomore";
         } else {
           this.pageNum++;
-          this.getAllPostList(0);
+          this.getAllPostList();
         }
       }, 500);
     },
@@ -333,9 +333,8 @@ export default {
 
     // 点击帖子
     handleClickPostItem(detailPostId) {
-      uni.setStorageSync("detailPostId", detailPostId);
       uni.navigateTo({
-        url: "../post-detail/index",
+        url: `../post-detail/index?detailPostId=${detailPostId}`,
       });
     },
 
@@ -345,10 +344,8 @@ export default {
       console.log("点赞了");
     },
     // 评论
-    handleClickComment(item) {
-      uni.navigateTo({
-        url: "../post-detail/index",
-      });
+    handleClickComment(id) {
+      this.handleClickPostItem(id);
     },
     // 分享
     handleClickShare() {

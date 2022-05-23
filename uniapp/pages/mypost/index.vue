@@ -149,7 +149,7 @@
               <u-text
                 type="info"
                 :lines="2"
-                :text="[].concat(item.comments).length"
+                :text="item && item.comments ? item.comments : 0"
               ></u-text>
             </view>
             <!-- share -->
@@ -340,7 +340,7 @@ export default {
             color: "#ffffff",
             bgColor: "#3c9cff",
             message: res.msg,
-            duration: 1000,
+            duration: 800,
             fontSize: 16,
             safeAreaInsetTop: true,
           });

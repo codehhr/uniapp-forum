@@ -2,8 +2,19 @@
   <view class="post-detail-page">
     <!-- category start -->
     <view class="category">
-      <button class="category-btn">
-        {{ categoryList[postItem.category].name }}
+      <button
+        class="category-btn"
+        v-if="
+          categoryList[postItem.category] &&
+          categoryList[postItem.category].name
+        "
+      >
+        {{
+          categoryList[postItem.category] &&
+          categoryList[postItem.category].name
+            ? categoryList[postItem.category].name
+            : ""
+        }}
       </button>
       <!-- title -->
       <view class="title">
@@ -11,9 +22,10 @@
           v-if="postItem.title"
           :lines="1"
           :text="postItem.title"
-          margin="20rpx 0 10rpx"
+          margin="24rpx 0 0"
+          bold
           color="#ffffff"
-          size="32rpx"
+          size="36rpx"
         ></u--text>
       </view>
     </view>
@@ -26,24 +38,24 @@
         <!-- avatar -->
         <u-avatar
           class="post-item-avatar"
-          icon="github-circle-fill"
+          :src="
+            postItem.author && postItem.author.avatar
+              ? postItem.author.avatar
+              : ''
+          "
           mpde="widthFix"
-          randomBgColor
           fontSize="64rpx"
         ></u-avatar>
-        <!-- <u--text
-          class="username"
-          :lines="1"
-          :text="postItem.user_name"
-          bold
-          size="16"
-        ></u--text> -->
         <u--text
           class="username"
           :lines="1"
-          :text="postItem.author.username"
+          :text="
+            postItem.author && postItem.author.username
+              ? postItem.author.username
+              : 'unknown'
+          "
           bold
-          size="16"
+          size="32rpx"
         ></u--text>
       </view>
       <!-- user info end -->
@@ -59,15 +71,25 @@
           "
           v-html="postItem.describe"
         ></view>
-        <!-- :lines="3" -->
         <u--text
           v-else-if="postItem.describe && postItem.describe.length"
           class="describe"
+          :lines="describeFoldLines"
           :text="postItem.describe"
-          size="24rpx"
+          lineHeight="28"
+          size="28rpx"
         ></u--text>
         <!-- 空 describe ，占位 -->
         <view v-else class="describe"></view>
+        <!-- <button
+          class="describe-fold-btn"
+          v-if="
+            categoryList[postItem.category] &&
+            categoryList[postItem.category].name
+          "
+        >
+          {{ describeFoldLines == 3 ? "展开" : "收起" }}
+        </button> -->
         <!-- describe end -->
 
         <!-- albums -->
@@ -119,25 +141,29 @@
         :label-width="320"
         :rules="commentFormRules"
       >
-        <!-- 发表评论内容 -->
-        <uni-forms-item name="title">
-          <view class="comment-content">
+        <view class="comment-form">
+          <!-- 发表评论内容 -->
+          <uni-forms-item name="content">
             <uni-easyinput
-              v-model="commentForm.title"
+              v-model="commentForm.content"
               :focus="commentFocus"
-              :clearable="!!commentForm.title"
+              :clearable="!!commentForm.content"
               :clearSize="20"
               type="textarea"
               autoHeight
               maxlength="-1"
+              autoBlur
               placeholder="说点什么吧"
-              @confirm="validatecommentForm('commentForm')"
             />
-            <view class="comment-confirm">
-              <u-button type="info" plain text="发送"></u-button>
-            </view>
+          </uni-forms-item>
+          <view class="comment-form-confirm">
+            <u-button
+              type="primary"
+              text="发送"
+              @click="validatecommentForm('commentForm')"
+            ></u-button>
           </view>
-        </uni-forms-item>
+        </view>
       </uni-forms>
 
       <u-empty
@@ -148,23 +174,103 @@
       >
       </u-empty>
       <view v-else>
+        <!-- comment list start -->
         <view class="comment-list">
-          <view v-for="item in postItem.comment" :key="item._id"></view>
+          <!-- comment item start -->
+          <view
+            class="comment-item"
+            v-for="comment in commentList"
+            :key="comment._id"
+          >
+            <!-- user info start -->
+            <view class="comment-user-info">
+              <!-- avatar -->
+              <u-avatar
+                class="comment-item-avatar"
+                :src="
+                  comment.author && comment.author.avatar
+                    ? comment.author.avatar
+                    : ''
+                "
+                type="info"
+                mpde="widthFix"
+                fontSize="32rpx"
+              ></u-avatar>
+            </view>
+            <!-- user info end -->
+            <!-- comment content start -->
+            <view class="comment-item-content-wrapper">
+              <u--text
+                class="comment-item-username"
+                :lines="1"
+                :text="
+                  comment.author && comment.author.username
+                    ? comment.author.username
+                    : 'unknown'
+                "
+                size="24rpx"
+              ></u--text>
+              <u--text
+                class="comment-item-content"
+                :lines="1"
+                :text="comment && comment.content ? comment.content : ''"
+                size="32rpx"
+              ></u--text>
+              <!-- updateTime -->
+              <u--text
+                class="comment-item-updateTime"
+                :lines="1"
+                :text="
+                  comment && comment.updateTime
+                    ? new Date(comment.updateTime).toLocaleString()
+                    : ''
+                "
+                type="info"
+                size="20rpx"
+              ></u--text>
+            </view>
+            <!-- comment content end -->
+          </view>
+          <!-- comment item end -->
         </view>
       </view>
     </view>
     <!-- post comments end -->
+
+    <!-- load start -->
+    <u-overlay :show="commentPostLoading">
+      <view class="loading-content-wrap">
+        <u-loading-icon
+          :show="true"
+          color="#ffffff"
+          loading-color="#ffffff"
+          :vertical="true"
+          mode="semicircle"
+          size="120rpx"
+          textSize="40rpx"
+        ></u-loading-icon>
+      </view>
+    </u-overlay>
+    <!-- load end -->
   </view>
 </template>
 
 <script>
-import { getPostByIdApi } from "../../api/post";
+import {
+  getPostByIdApi,
+  commentPostApi,
+  getCommentsByPostIdApi,
+} from "../../api/post";
 
 export default {
   data() {
     return {
+      commentPostLoading: false,
+      describeFoldLines: 0,
       commentFocus: false,
       commentForm: {},
+      detailPostId: "",
+      commentList: [],
       categoryList: [
         {
           name: "全部",
@@ -219,45 +325,26 @@ export default {
           ],
         },
       ],
-      postItem: {
-        title: "致敬开源",
-        category: 3,
-        describe:
-          "Linus Benedict Torvalds 因创造了两个伟大的项目 —— Linux Kernel 和 Git 而被大家熟知。但他对开源的贡献不限于代码，在倡导开源运动和开源精神、以及运作和管理大型开源项目等方面，Linus 都做出了巨大贡献。Linus 还创造了不少为人称道的金句，最有名的莫过于 'Talk is cheap, Show me the code'。",
-        albums: [
-          { url: "http://192.168.1.107:9000/imgs/linux.jpg" },
-          { url: "http://192.168.1.107:9000/imgs/tusiji.png" },
-        ],
-        author: {
-          username: "Tom",
+      postItem: {},
+      commentFormRules: {
+        content: {
+          rules: [
+            {
+              required: true,
+              errorMessage: "评论内容不能为空",
+            },
+          ],
         },
-        comment: [
-          {
-            content: "Linux is great !",
-            createTime: 1652614174409,
-            author: {
-              username: "Tom",
-              avatar: "",
-            },
-          },
-          {
-            content: "Linux is great !",
-            createTime: 1652614174409,
-            author: {
-              username: "Jerry",
-              avatar: "",
-            },
-          },
-        ],
       },
-      commentFormRules: {},
     };
   },
 
-  onReady() {
-    // 开局先获取一次帖子
-    // this.getPostById(uni.getStorageSync("detailPostId"));
-    uni.removeStorageSync("detailPostId");
+  onLoad(options) {
+    if (options.detailPostId) {
+      this.detailPostId = options.detailPostId;
+      this.getPostById(options.detailPostId);
+      this.getCommentsByPostId(options.detailPostId);
+    }
   },
 
   onPageScroll(e) {
@@ -271,9 +358,44 @@ export default {
   },
 
   methods: {
+    // 验证 form
+    validatecommentForm(ref) {
+      if (!this.commentForm.content) {
+        this.commentFocus = true;
+      }
+      this.$refs[ref]
+        .validate()
+        .then((data) => {
+          this.commentPostLoading = true;
+          this.handleComment();
+        })
+        .catch((e) => {});
+    },
+
     async getPostById(id) {
       const res = await getPostByIdApi(id).catch((e) => {});
-      console.log(res);
+      if (res && res.code == 0) {
+        this.postItem = res.post;
+      }
+    },
+
+    async getCommentsByPostId(id) {
+      const res = await getCommentsByPostIdApi(id).catch((e) => {});
+      if (res && res.code == 0) {
+        this.commentList = res.comments;
+      }
+    },
+
+    // 发表评论
+    async handleComment() {
+      const res = await commentPostApi({
+        postId: this.postItem._id,
+        data: this.commentForm,
+      }).catch((e) => {});
+      if (res && res.code == 0) {
+        this.commentPostLoading = false;
+        this.getCommentsByPostId(this.detailPostId);
+      }
     },
   },
 };
@@ -310,9 +432,12 @@ export default {
       }
     }
     .post-content {
-      padding: 10rpx 20rpx 0 80rpx;
+      padding: 10rpx 20rpx 0 90rpx;
       .describe {
         padding: 10rpx 0 20rpx;
+      }
+      .describe-fold-btn {
+        background-color: #3c9cff;
       }
       .post-actions {
         padding-top: 64rpx;
@@ -343,15 +468,32 @@ export default {
         background-color: #2979ff;
       }
     }
-    .comment-content {
-      display: flex !important;
-      .comment-confirm {
+    .comment-form {
+      display: flex;
+      justify-content: space-between;
+      .comment-form-confirm {
         margin-left: 20rpx;
         display: flex;
         align-items: center;
         justify-content: center;
       }
     }
+    .comment-list {
+      .comment-item {
+        margin: 24rpx 0;
+        display: flex;
+        justify-content: flex-start;
+        .comment-user-info {
+          margin-right: 16rpx;
+        }
+      }
+    }
+  }
+  .loading-content-wrap {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 </style>
